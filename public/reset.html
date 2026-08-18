@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Resetting Adn Tracker...</title>
+  <style>
+    body { background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; flex-direction: column; gap: 16px; }
+    .spinner { width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #6366f1; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    p { color: #94a3b8; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="spinner"></div>
+  <p>Clearing all data and starting fresh…</p>
+  <script>
+    try {
+      localStorage.clear();
+      localStorage.setItem('plt_seeded', 'true'); // prevent demo re-seed
+      console.log('[Adn Tracker] All data cleared successfully.');
+    } catch(e) {
+      console.error('Clear failed:', e);
+    }
+    setTimeout(() => { window.location.href = '/'; }, 800);
+  </script>
+</body>
+</html>
