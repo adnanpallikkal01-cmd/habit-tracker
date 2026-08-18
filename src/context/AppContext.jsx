@@ -5,6 +5,17 @@ import { DEFAULT_SETTINGS, DEFAULT_HABITS, DEFAULT_BUDGETS, DEFAULT_GOALS } from
 const AppContext = createContext(null)
 
 // ── Initial State ────────────────────────────────────────────────
+function hasStoredData() {
+  const exported = storage.exportAll()
+  return Object.entries(exported).some(([key, value]) => {
+    if (key === 'userId') return false
+    if (value === null || value === undefined) return false
+    if (Array.isArray(value)) return value.length > 0
+    if (typeof value === 'object') return Object.keys(value).length > 0
+    return value !== ''
+  })
+}
+
 function loadInitialState() {
   const settings = storage.get('settings') || DEFAULT_SETTINGS
   const habits = storage.get('habits') || DEFAULT_HABITS
@@ -159,10 +170,18 @@ export function AppProvider({ children }) {
   // Load cloud data once. If no cloud record exists, the user starts with empty data.
   useEffect(() => {
     let active = true
+    const localHasData = hasStoredData()
+
     storage.loadRemoteState().then(remoteState => {
-      if (active && remoteState) dispatch({ type: 'HYDRATE_STATE', payload: remoteState })
+      if (!active) return
+      if (remoteState && !localHasData) {
+        dispatch({ type: 'HYDRATE_STATE', payload: remoteState })
+      }
+      setHydrated(true)
+    }).catch(() => {
       if (active) setHydrated(true)
     })
+
     return () => { active = false }
   }, [])
 
