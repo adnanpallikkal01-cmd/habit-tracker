@@ -746,30 +746,32 @@ function AutoScheduleModal({ onSave, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
-      style={{ background: 'rgba(0,0,0,0.85)' }}
+      style={{ background: 'rgba(0,0,0,0.85)', overflowX: 'hidden' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-[min(420px,calc(100vw-0.75rem))] max-h-[min(78vh,720px)] overflow-hidden rounded-[20px] animate-scaleIn study-card" style={{ border: '1px solid #2a1a40' }}>
-        <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          <h2 className="text-base font-bold text-white">Auto Schedule</h2>
+      <div className="w-full max-w-[min(420px,calc(100vw-0.75rem))] max-h-[min(78vh,720px)] overflow-hidden rounded-[20px] animate-scaleIn study-card"
+        style={{ border: '1px solid #2a1a40', width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
+        <div className="flex items-center justify-between px-4 pt-4 pb-2" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+          <h2 className="text-base font-bold text-white" style={{ maxWidth: 'calc(100% - 36px)' }}>Auto Schedule</h2>
           <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: '#1a1a1a', color: '#555' }}>
+            style={{ background: '#1a1a1a', color: '#555', flexShrink: 0 }}>
             <X size={14} />
           </button>
         </div>
 
-        <div className="px-4 pb-4 space-y-3 overflow-y-auto overscroll-contain" style={{ maxHeight: 'calc(min(78vh,720px) - 56px)', WebkitOverflowScrolling: 'touch' }}>
+        <div className="px-4 pb-4 space-y-3 overflow-y-auto overscroll-contain" style={{ maxHeight: 'calc(min(78vh,720px) - 56px)', WebkitOverflowScrolling: 'touch', width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
           {/* Subjects */}
-          <div>
-            <label className="text-xs font-medium mb-2 block" style={{ color: '#555' }}>Subjects (in order)</label>
-            <div className="space-y-2">
+          <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+            <label className="text-xs font-medium mb-2 block" style={{ color: '#555', width: '100%', maxWidth: '100%' }}>Subjects (in order)</label>
+            <div className="space-y-2" style={{ width: '100%', maxWidth: '100%' }}>
               {subjects.map((subj, idx) => (
-                <div key={idx} className="flex gap-2 items-center">
-                  <span className="text-xs font-bold px-2 py-1 rounded-lg" style={{ background: '#5C2D91', color: '#fff', minWidth: '28px', textAlign: 'center' }}>{idx + 1}</span>
+                <div key={idx} className="flex gap-2 items-center" style={{ width: '100%', maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }}>
+                  <span className="text-xs font-bold px-2 py-1 rounded-lg" style={{ background: '#5C2D91', color: '#fff', minWidth: '28px', textAlign: 'center', flexShrink: 0 }}>{idx + 1}</span>
                   <input className="study-input flex-1" value={subj}
-                    onChange={e => updateSubject(idx, e.target.value)} placeholder="Subject name" />
+                    onChange={e => updateSubject(idx, e.target.value)} placeholder="Subject name"
+                    style={{ width: '100%', maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }} />
                   <button onClick={() => removeSubject(idx)}
                     className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ background: '#1a1a1a', color: '#f87171' }}>
+                    style={{ background: '#1a1a1a', color: '#f87171', flexShrink: 0 }}>
                     <Trash2 size={12} />
                   </button>
                 </div>
@@ -777,42 +779,45 @@ function AutoScheduleModal({ onSave, onClose }) {
             </div>
             <button onClick={addSubject}
               className="mt-2 text-xs text-center w-full py-2 rounded-lg"
-              style={{ color: '#5C2D91', background: 'rgba(92,45,145,0.1)' }}>
+              style={{ color: '#5C2D91', background: 'rgba(92,45,145,0.1)', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
               + Add Subject
             </button>
           </div>
 
           {/* Date */}
-          <div>
-            <label className="text-xs font-medium mb-1.5 block" style={{ color: '#555' }}>Date</label>
+          <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+            <label className="text-xs font-medium mb-1.5 block" style={{ color: '#555', width: '100%', maxWidth: '100%' }}>Date</label>
             <input type="date" value={selectedDate}
               onChange={e => setSelectedDate(e.target.value)}
-              className="study-input w-full" />
+              className="study-input w-full"
+              style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }} />
           </div>
 
           {/* Start Time */}
-          <div>
-            <label className="text-xs font-medium mb-1.5 block" style={{ color: '#555' }}>Start time</label>
+          <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+            <label className="text-xs font-medium mb-1.5 block" style={{ color: '#555', width: '100%', maxWidth: '100%' }}>Start time</label>
             <input type="time" value={startTime}
               onChange={e => setStartTime(e.target.value)}
-              className="study-input w-full" />
+              className="study-input w-full"
+              style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }} />
           </div>
 
           {/* Duration */}
-          <div>
-            <label className="text-xs font-medium mb-1.5 block" style={{ color: '#555' }}>Duration per subject</label>
-            <div className="flex items-center gap-2">
+          <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+            <label className="text-xs font-medium mb-1.5 block" style={{ color: '#555', width: '100%', maxWidth: '100%' }}>Duration per subject</label>
+            <div className="flex items-center gap-2" style={{ width: '100%', maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }}>
               <input type="number" min="15" max="180" step="15"
                 className="study-input flex-1"
-                value={sessionDuration} onChange={e => setSessionDuration(Number(e.target.value))} />
-              <span className="text-sm" style={{ color: '#555' }}>mins</span>
+                value={sessionDuration} onChange={e => setSessionDuration(Number(e.target.value))}
+                style={{ width: '100%', maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }} />
+              <span className="text-sm" style={{ color: '#555', flexShrink: 0 }}>mins</span>
             </div>
           </div>
 
           {/* Schedule Preview */}
-          <div className="p-3 rounded-xl" style={{ background: '#0a0a0a', border: '1px solid #1a1a1a' }}>
-            <p className="text-xs font-medium mb-2" style={{ color: '#888' }}>Schedule preview:</p>
-            <div className="space-y-1">
+          <div className="p-3 rounded-xl" style={{ background: '#0a0a0a', border: '1px solid #1a1a1a', width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}>
+            <p className="text-xs font-medium mb-2" style={{ color: '#888', width: '100%', maxWidth: '100%' }}>Schedule preview:</p>
+            <div className="space-y-1" style={{ width: '100%', maxWidth: '100%' }}>
               {subjects.map((subj, idx) => {
                 let sHour = parseInt(startTime.split(':')[0])
                 let sMin = parseInt(startTime.split(':')[1])
@@ -822,7 +827,7 @@ function AutoScheduleModal({ onSave, onClose }) {
                   sMin = sMin % 60
                 }
                 const slotStart = String(sHour).padStart(2, '0') + ':' + String(sMin).padStart(2, '0')
-                
+
                 let eMin = sMin + sessionDuration
                 let eHour = sHour
                 if (eMin >= 60) {
@@ -832,25 +837,25 @@ function AutoScheduleModal({ onSave, onClose }) {
                 const slotEnd = String(eHour).padStart(2, '0') + ':' + String(eMin).padStart(2, '0')
 
                 return (
-                  <div key={idx} className="text-xs" style={{ color: '#888' }}>
+                  <div key={idx} className="text-xs" style={{ color: '#888', overflowWrap: 'anywhere', width: '100%', maxWidth: '100%' }}>
                     <span style={{ color: '#EDBB00' }}>{slotStart}</span> - <span style={{ color: '#EDBB00' }}>{slotEnd}</span>
                     <span> • {subj}</span>
                   </div>
                 )
               })}
             </div>
-            <p className="text-xs mt-2 pt-2 border-t border-slate-700" style={{ color: '#888' }}>
+            <p className="text-xs mt-2 pt-2 border-t border-slate-700" style={{ color: '#888', width: '100%', maxWidth: '100%', overflowWrap: 'anywhere' }}>
               Total time: {subjects.length * sessionDuration} mins ({startTime} → {endTime})
             </p>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-1">
-            <button onClick={onClose} className="study-btn-ghost flex-1">Cancel</button>
+          <div className="flex gap-3 pt-1" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+            <button onClick={onClose} className="study-btn-ghost flex-1" style={{ minWidth: 0 }}>Cancel</button>
             <button onClick={handleGenerate}
               disabled={subjects.length === 0}
               className="study-btn-gold flex-1"
-              style={{ opacity: subjects.length === 0 ? 0.4 : 1 }}>
+              style={{ opacity: subjects.length === 0 ? 0.4 : 1, minWidth: 0 }}>
               Create Schedule
             </button>
           </div>
