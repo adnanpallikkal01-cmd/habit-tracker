@@ -40,10 +40,10 @@ function fmtDate(dateStr) {
 // Subject Meta (emoji + accent used in timer ring)
 // ─────────────────────────────────────────────────────────────────
 const SUBJECT_EMOJIS = {
-  'Mathematics': '📐', 'Physics': '⚛️', 'Chemistry': '🧪', 'Biology': '🧬',
+
   'JavaScript': '🟨', 'React': '⚛️', 'Node.js': '🟢', 'MongoDB': '🍃',
-  'Python': '🐍', 'Data Structures': '🌳', 'Algorithms': '🔢', 'English': '📝',
-  'History': '📜', 'Geography': '🌍', 'Economics': '📈', 'Computer Science': '💻',
+  'Python': '🐍', 'Data Structures': '🌳', 'Algorithms': '🔢', 'English': '📝'
+  , 'Computer Science': '💻',
   'Other': '📚'
 }
 const getEmoji = (s) => SUBJECT_EMOJIS[s] || '📚'
@@ -467,12 +467,12 @@ function EditModal({ item, onSave, onClose }) {
   useEffect(() => setF('durationMins', hrs * 60 + mins), [hrs, mins])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
       style={{ background: 'rgba(0,0,0,0.85)' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-md max-h-[90vh] overflow-hidden rounded-[22px] animate-scaleIn study-card" style={{ border: '1px solid #2a1a40' }}>
+      <div className="w-full max-w-[calc(100vw-0.75rem)] max-h-[76vh] overflow-hidden rounded-[20px] animate-scaleIn study-card" style={{ border: '1px solid #2a1a40' }}>
         {/* Header */}
-        <div className="flex items-center justify-between p-5 pb-0">
+        <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <h2 className="text-base font-bold text-white">Edit Session</h2>
           <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center"
             style={{ background: '#1a1a1a', color: '#555' }}>
@@ -480,7 +480,7 @@ function EditModal({ item, onSave, onClose }) {
           </button>
         </div>
 
-        <div className="p-5 space-y-4 overflow-y-auto overscroll-contain" style={{ maxHeight: 'calc(90vh - 72px)', WebkitOverflowScrolling: 'touch' }}>
+        <div className="px-4 pb-4 space-y-3 overflow-y-auto overscroll-contain" style={{ maxHeight: 'calc(76vh - 56px)', WebkitOverflowScrolling: 'touch' }}>
           {/* Topic */}
           <div>
             <label className="text-xs font-medium mb-1.5 block" style={{ color: '#555' }}>Topic *</label>
@@ -567,11 +567,11 @@ function AddScheduleModal({ onSave, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
       style={{ background: 'rgba(0,0,0,0.85)' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-md max-h-[90vh] overflow-hidden rounded-[22px] animate-scaleIn study-card" style={{ border: '1px solid #2a1a40' }}>
-        <div className="flex items-center justify-between p-5 pb-0">
+      <div className="w-full max-w-[calc(100vw-0.75rem)] max-h-[76vh] overflow-hidden rounded-[20px] animate-scaleIn study-card" style={{ border: '1px solid #2a1a40' }}>
+        <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <div>
             <h2 className="text-base font-bold text-white">Schedule Study Session</h2>
             <p className="text-xs mt-0.5" style={{ color: '#444' }}>Plan what you'll study and when</p>
@@ -582,7 +582,7 @@ function AddScheduleModal({ onSave, onClose }) {
           </button>
         </div>
 
-        <div className="p-5 space-y-4 overflow-y-auto overscroll-contain" style={{ maxHeight: 'calc(90vh - 72px)', WebkitOverflowScrolling: 'touch' }}>
+        <div className="px-4 pb-4 space-y-3 overflow-y-auto overscroll-contain" style={{ maxHeight: 'calc(76vh - 56px)', WebkitOverflowScrolling: 'touch' }}>
           <div>
             <label className="text-xs font-medium mb-1.5 block" style={{ color: '#555' }}>Topic / Subject *</label>
             <input className="study-input" placeholder="e.g. Chapter 3 – Quadratic Equations"
@@ -745,11 +745,11 @@ function AutoScheduleModal({ onSave, onClose }) {
   const endTime = String(endHour).padStart(2, '0') + ':' + String(endMinute).padStart(2, '0')
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
       style={{ background: 'rgba(0,0,0,0.85)' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-md max-h-[90vh] overflow-hidden rounded-[22px] animate-scaleIn study-card" style={{ border: '1px solid #2a1a40' }}>
-        <div className="flex items-center justify-between p-5 pb-0">
+      <div className="w-full max-w-[calc(100vw-0.75rem)] max-h-[76vh] overflow-hidden rounded-[20px] animate-scaleIn study-card" style={{ border: '1px solid #2a1a40' }}>
+        <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <h2 className="text-base font-bold text-white">Auto Schedule</h2>
           <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center"
             style={{ background: '#1a1a1a', color: '#555' }}>
@@ -757,7 +757,7 @@ function AutoScheduleModal({ onSave, onClose }) {
           </button>
         </div>
 
-        <div className="p-5 space-y-4 overflow-y-auto overscroll-contain" style={{ maxHeight: 'calc(90vh - 72px)', WebkitOverflowScrolling: 'touch' }}>
+        <div className="px-4 pb-4 space-y-3 overflow-y-auto overscroll-contain" style={{ maxHeight: 'calc(76vh - 56px)', WebkitOverflowScrolling: 'touch' }}>
           {/* Subjects */}
           <div>
             <label className="text-xs font-medium mb-2 block" style={{ color: '#555' }}>Subjects (in order)</label>
