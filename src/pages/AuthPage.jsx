@@ -1,6 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { BookOpen, Eye, EyeOff, Loader2, LogIn, UserPlus, Mail, Lock } from 'lucide-react'
+import { BookOpen, Eye, EyeOff, Loader2, LogIn, UserPlus, Mail, Lock, Wifi, WifiOff } from 'lucide-react'
+
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/$/, '')
 
 export default function AuthPage() {
   const { login, signup } = useAuth()
@@ -11,6 +13,14 @@ export default function AuthPage() {
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [serverStatus, setServerStatus] = useState('checking') // 'checking' | 'ok' | 'error'
+
+  // Health-check the backend on mount so user sees if server is reachable
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/health`)
+      .then(r => r.ok ? setServerStatus('ok') : setServerStatus('error'))
+      .catch(() => setServerStatus('error'))
+  }, [])
 
   const isLogin = mode === 'login'
 
@@ -75,6 +85,23 @@ export default function AuthPage() {
           </div>
           <h1 className="text-2xl font-black text-white tracking-tight">Adn Tracker</h1>
           <p className="text-sm text-slate-400 mt-1">Your personal life & productivity hub</p>
+
+          {/* Server status indicator */}
+          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
+            style={{
+              background: serverStatus === 'ok' ? 'rgba(34,197,94,0.12)' : serverStatus === 'error' ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.06)',
+              border: serverStatus === 'ok' ? '1px solid rgba(34,197,94,0.3)' : serverStatus === 'error' ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(255,255,255,0.1)',
+              color: serverStatus === 'ok' ? '#22c55e' : serverStatus === 'error' ? '#f87171' : '#6b7280',
+            }}>
+            {serverStatus === 'ok' && <><Wifi size={11} /> Server connected</>}
+            {serverStatus === 'error' && <><WifiOff size={11} /> Server unreachable &mdash; check VITE_API_URL</>}
+            {serverStatus === 'checking' && <><Loader2 size={11} className="animate-spin" /> Checking server&hellip;</>}
+          </div>
+
+          {/* Show which URL is being used — helps debug env var issues */}
+          <p className="text-xs mt-1" style={{ color: '#333' }}>
+            API: {API_BASE_URL}
+          </p>
         </div>
 
         {/* Card */}
