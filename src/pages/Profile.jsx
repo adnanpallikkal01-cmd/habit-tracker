@@ -86,7 +86,7 @@ export default function Profile() {
   const settings = state.settings
   const [confirmReset, setConfirmReset] = useState(false)
   const [confirmLogout, setConfirmLogout] = useState(false)
-  const [pushStatus, setPushStatus] = useState({ loading: true, configured: false, subscribed: false, error: '' })
+  const [pushStatus, setPushStatus] = useState({ loading: true, configured: false, subscribed: false, error: '', message: '' })
   const [pushBusy, setPushBusy] = useState(false)
 
   const update = (key, value) => dispatch({ type: 'UPDATE_SETTINGS', payload: { [key]: value } })
@@ -101,7 +101,7 @@ export default function Profile() {
       const registration = 'serviceWorker' in navigator ? await navigator.serviceWorker.ready : null
       subscribed = Boolean(await registration?.pushManager?.getSubscription())
     } catch {}
-    setPushStatus({ loading: false, configured: server.pushConfigured, subscribed, error: server.ok ? '' : 'Cannot reach notification server.' })
+    setPushStatus({ loading: false, configured: server.pushConfigured, subscribed, error: server.error || '', message: '' })
   }
 
   React.useEffect(() => { refreshPushStatus() }, [])
@@ -463,9 +463,9 @@ export default function Profile() {
                   const result = await enableBackgroundNotifications()
                   if (!result?.ok && result?.reason) throw new Error(result.reason)
                   await refreshPushStatus()
-                  alert('Background notifications enabled.')
+                  setPushStatus(s => ({ ...s, error: '', message: 'Background notifications enabled successfully.' }))
                 } catch (error) {
-                  setPushStatus(s => ({ ...s, error: error?.message || 'Could not enable background notifications.' }))
+                  setPushStatus(s => ({ ...s, error: error?.message || 'Could not enable background notifications.', message: '' }))
                 } finally { setPushBusy(false) }
               }}
               className="px-3 py-2 rounded-xl bg-violet-600 text-white text-xs font-semibold disabled:opacity-50"
@@ -475,15 +475,17 @@ export default function Profile() {
           </div>
         </Row>
         <div className={`rounded-xl border p-3 text-xs ${pushStatus.configured && pushStatus.subscribed ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-300' : 'border-amber-500/20 bg-amber-500/5 text-amber-300'}`}>
-          {pushStatus.loading ? 'Checking notification server…' : pushStatus.configured ? (pushStatus.subscribed ? 'Background push is ready. Test it before relying on reminders.' : 'Server push is ready. Enable notifications on this phone.') : 'Background notifications are not configured on the server yet. Add the VAPID keys to Render, then tap Enable / Refresh.'}
+          {pushStatus.loading ? 'Checking notification server…' : pushStatus.configured ? (pushStatus.subscribed ? 'Background push is ready. Test it before relying on reminders.' : 'Server push is ready. Enable notifications on this phone.') : 'Background notifications are not configured on the server. Add VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY to Render, redeploy the API, then tap Enable / Refresh.'}
+          {pushStatus.message && <div className="mt-1 text-emerald-300">{pushStatus.message}</div>}
           {pushStatus.error && <div className="mt-1 text-red-300">{pushStatus.error}</div>}
+          {!pushStatus.loading && !pushStatus.error && !pushStatus.configured && <div className="mt-1 text-slate-400">API: {pushStatus.endpoint}</div>}
         </div>
         {pushStatus.configured && pushStatus.subscribed && (
           <button
             type="button"
             onClick={async () => {
-              try { await testBackgroundNotification(); alert('Test notification sent. Lock the phone and check the notification.'); }
-              catch (error) { alert(error?.message || 'Test notification failed.') }
+              try { await testBackgroundNotification(); setPushStatus(s => ({ ...s, error: '', message: 'Test notification sent. Lock the phone and check your notification.' })) }
+              catch (error) { setPushStatus(s => ({ ...s, error: error?.message || 'Test notification failed.', message: '' })) }
             }}
             className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold"
           >

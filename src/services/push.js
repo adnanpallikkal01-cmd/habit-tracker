@@ -1,5 +1,8 @@
 const TOKEN_KEY = 'adn_auth_token'
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/$/, '')
+const DEFAULT_API_URL = typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)
+  ? 'https://habit-tracker-lwfi.onrender.com/api'
+  : 'http://localhost:4000/api'
+const API_BASE_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, '')
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -17,20 +20,42 @@ const authHeaders = () => {
 }
 
 async function getPublicKey() {
-  const response = await fetch(`${API_BASE_URL}/push/public-key`)
-  const data = await response.json().catch(() => ({}))
-  if (!response.ok) throw new Error(data.message || 'Background notifications are not configured on the server yet.')
-  if (!data?.publicKey) throw new Error('Background notification key is missing.')
-  return data.publicKey
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 8000)
+  try {
+    const response = await fetch(`${API_BASE_URL}/push/public-key`, { signal: controller.signal })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(data.message || `Notification server returned HTTP ${response.status}.`)
+    if (!data?.publicKey) throw new Error('Background notification key is missing on the server.')
+    return data.publicKey
+  } catch (error) {
+    if (error?.name === 'AbortError') throw new Error('Notification server is taking too long to respond. The Render service may be waking up.')
+    throw error
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 export async function getBackgroundNotificationStatus() {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 8000)
   try {
-    const response = await fetch(`${API_BASE_URL}/health`)
+    const response = await fetch(`${API_BASE_URL}/health`, { signal: controller.signal })
     const data = await response.json().catch(() => ({}))
-    return { ok: response.ok, pushConfigured: Boolean(data?.pushConfigured), data }
-  } catch {
-    return { ok: false, pushConfigured: false, data: null }
+    return {
+      ok: response.ok,
+      pushConfigured: Boolean(data?.pushConfigured),
+      data,
+      endpoint: `${API_BASE_URL}/health`,
+      error: response.ok ? '' : (data?.message || `Notification server returned HTTP ${response.status}.`),
+    }
+  } catch (error) {
+    const message = error?.name === 'AbortError'
+      ? 'Notification server timed out. The Render service may be sleeping or unavailable.'
+      : 'Cannot reach notification server. Check VITE_API_URL and the Render service.'
+    return { ok: false, pushConfigured: false, data: null, endpoint: `${API_BASE_URL}/health`, error: message }
+  } finally {
+    clearTimeout(timer)
   }
 }
 

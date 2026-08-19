@@ -9,7 +9,7 @@ import webpush from 'web-push'
 const app = express()
 const PORT = process.env.PORT || 4000
 const MONGODB_URI = process.env.MONGODB_URI
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || '*'
+const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGIN || '*').split(',').map(origin => origin.trim()).filter(Boolean)
 const JWT_SECRET = process.env.JWT_SECRET || 'adn_tracker_jwt_secret_change_in_prod_2024'
 const JWT_EXPIRES_IN = '30d'
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || ''
@@ -27,7 +27,13 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   console.warn('VAPID keys are not configured. Background push notifications are disabled until VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY are added.')
 }
 
-app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }))
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || FRONTEND_ORIGINS.includes('*') || FRONTEND_ORIGINS.includes(origin)) return callback(null, true)
+    return callback(new Error('CORS origin not allowed'))
+  },
+  credentials: true,
+}))
 app.use(express.json({ limit: '10mb' }))
 
 const userSchema = new mongoose.Schema({
@@ -72,7 +78,15 @@ function authMiddleware(req, res, next) {
   }
 }
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, pushConfigured: Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) }))
+app.get('/api/health', (_req, res) => res.json({
+  ok: true,
+  pushConfigured: Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY),
+  push: {
+    vapidPublicKeyConfigured: Boolean(VAPID_PUBLIC_KEY),
+    vapidPrivateKeyConfigured: Boolean(VAPID_PRIVATE_KEY),
+    subjectConfigured: Boolean(VAPID_SUBJECT),
+  },
+}))
 
 app.post('/api/auth/signup', async (req, res) => {
   try {
@@ -347,6 +361,7 @@ mongoose.connect(MONGODB_URI)
     console.log('MongoDB connected')
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Adn Tracker API listening on port ${PORT}`)
+      console.log(`Background push configured: ${Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY)}`)
       if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
         setTimeout(runReminderScheduler, 5000)
         setInterval(runReminderScheduler, 15_000)
