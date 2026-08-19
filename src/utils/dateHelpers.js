@@ -67,6 +67,19 @@ export const getWeekDates = () => {
   })
 }
 
+
+/** Formats a 24-hour HH:mm value for display in 12-hour format. */
+export const formatTime12 = (timeStr) => {
+  if (!timeStr) return ''
+  const [hRaw, mRaw] = String(timeStr).split(':')
+  const h = Number(hRaw)
+  const m = Number(mRaw)
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return String(timeStr)
+  const period = h >= 12 ? 'PM' : 'AM'
+  const hour = h % 12 || 12
+  return `${hour}:${String(m).padStart(2, '0')} ${period}`
+}
+
 /** Returns greeting based on hour */
 export const getGreeting = () => {
   const h = new Date().getHours()

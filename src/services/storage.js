@@ -43,6 +43,14 @@ const authHeaders = () => {
 }
 
 let syncTimer = null
+const REQUEST_TIMEOUT_MS = 7000
+
+const fetchWithTimeout = async (url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) => {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try { return await fetch(url, { ...options, signal: controller.signal }) }
+  finally { clearTimeout(timer) }
+}
 
 const safeParse = (raw) => {
   try { return raw ? JSON.parse(raw) : null } catch { return null }
@@ -76,7 +84,7 @@ export const storage = {
     const token = getToken()
     if (!token) return // not logged in, skip sync
     try {
-      await fetch(`${API_BASE_URL}/state`, {
+      await fetchWithTimeout(`${API_BASE_URL}/state`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify({ state }),
@@ -89,7 +97,7 @@ export const storage = {
     const token = getToken()
     if (!token) return null
     try {
-      const response = await fetch(`${API_BASE_URL}/state`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/state`, {
         headers: authHeaders(),
       })
       if (!response.ok) return null
@@ -104,7 +112,7 @@ export const storage = {
     const token = getToken()
     if (!token) return
     try {
-      await fetch(`${API_BASE_URL}/state`, {
+      await fetchWithTimeout(`${API_BASE_URL}/state`, {
         method: 'DELETE',
         headers: authHeaders(),
       })

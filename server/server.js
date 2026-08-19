@@ -150,6 +150,30 @@ app.post('/api/push/subscribe', authMiddleware, async (req, res) => {
   res.json({ ok: true })
 })
 
+app.post('/api/push/test', authMiddleware, async (req, res) => {
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return res.status(503).json({ message: 'Background notifications are not configured on the server yet.' })
+  const subscriptions = await PushSubscription.find({ userId: req.userId }).lean()
+  if (!subscriptions.length) return res.status(404).json({ message: 'No push subscription found. Tap Enable / Refresh first.' })
+  let delivered = false
+  for (const record of subscriptions) {
+    try {
+      await webpush.sendNotification(record.subscription, JSON.stringify({
+        title: '🔔 Adn Tracker test',
+        body: 'Background notifications are working. Your reminders can now arrive when the app is closed.',
+        tag: 'adn-tracker-test',
+        renotify: true,
+        url: '/profile',
+      }))
+      delivered = true
+    } catch (error) {
+      if (error.statusCode === 404 || error.statusCode === 410) await PushSubscription.deleteOne({ _id: record._id })
+      else console.error('Test push delivery error:', error.message)
+    }
+  }
+  if (!delivered) return res.status(502).json({ message: 'The push service rejected the subscription. Enable / Refresh again.' })
+  res.json({ ok: true, message: 'Test notification sent.' })
+})
+
 app.delete('/api/push/subscribe', authMiddleware, async (req, res) => {
   const endpoint = req.body?.endpoint
   if (endpoint) await PushSubscription.deleteOne({ userId: req.userId, endpoint })
@@ -166,6 +190,29 @@ function getLocalParts(date, timeZone) {
   const out = {}
   for (const part of parts) if (part.type !== 'literal') out[part.type] = part.value
   return out
+}
+
+function formatTime12(timeStr) {
+  if (!timeStr) return ''
+  const [hRaw, mRaw] = String(timeStr).split(':')
+  const h = Number(hRaw), m = Number(mRaw)
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return String(timeStr)
+  const period = h >= 12 ? 'PM' : 'AM'
+  const hour = h % 12 || 12
+  return `${hour}:${String(m).padStart(2, '0')} ${period}`
+}
+
+function dueWithinWindow(date, timeZone, dateStr, timeStr, windowMinutes = 5) {
+  if (!dateStr || !timeStr) return false
+  const local = getLocalParts(date, timeZone)
+  const localDate = `${local.year}-${local.month}-${local.day}`
+  if (localDate !== dateStr) return false
+  const currentMinutes = Number(local.hour) * 60 + Number(local.minute)
+  const [hour, minute] = String(timeStr).split(':').map(Number)
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return false
+  const scheduledMinutes = hour * 60 + minute
+  const diff = currentMinutes - scheduledMinutes
+  return diff >= 0 && diff <= windowMinutes
 }
 
 function dueNow(date, timeZone, dateStr, timeStr) {
@@ -214,7 +261,7 @@ async function runReminderScheduler() {
       // Daily prayer reminders.
       if (settings.notifications?.prayer !== false) {
         for (const [prayerId, time] of Object.entries(settings.prayerTimes || {})) {
-          if (time && dueNow(now, timeZone, today, time)) {
+          if (time && dueWithinWindow(now, timeZone, today, time, 5)) {
             const labels = { fajr:['🌅','Fajr','الفجر'], dhuhr:['☀️','Dhuhr','الظهر'], asr:['🌤️','Asr','العصر'], maghrib:['🌇','Maghrib','المغرب'], isha:['🌙','Isha','العشاء'] }
             const meta = labels[prayerId] || ['🤲', prayerId, '']
             await sendReminder(record.userId, `prayer:${today}:${prayerId}`, { title: `${meta[0]} Time for ${meta[1]} Prayer`, body: `${meta[2]} — It's prayer time. Don't miss it! 🤲`, tag: `prayer-${prayerId}`, url: '/prayer' })
@@ -227,8 +274,8 @@ async function runReminderScheduler() {
         const reminderEnabled = item?.reminderEnabled ?? item?.reminder ?? false
         const hint = item?.reminderTime || item?.time || item?.startTime
         if (!item?.id || !reminderEnabled || item.completed || item.notificationSentAt || !item.date || !hint) continue
-        if (dueNow(now, timeZone, item.date, hint)) {
-          await sendReminder(record.userId, `study:${item.id}:${item.date}:${hint}`, { title: `📚 ${item.topic || item.subject || 'Study session'} is starting`, body: `Your scheduled study session starts at ${hint}.`, tag: `study-${item.id}`, url: '/study' })
+        if (dueWithinWindow(now, timeZone, item.date, hint, 5)) {
+          await sendReminder(record.userId, `study:${item.id}:${item.date}:${hint}`, { title: `📚 ${item.topic || item.subject || 'Study session'} is starting`, body: `Your scheduled study session starts at ${formatTime12(hint)}.`, tag: `study-${item.id}`, url: '/study' })
         }
       }
 
@@ -237,7 +284,7 @@ async function runReminderScheduler() {
         if (!event?.id || !event.reminderEnabled || !event.date || !event.time) continue
         let eventDate = event.date
         if (event.repeatAnnually) eventDate = `${today.slice(0,4)}-${event.date.slice(5,10)}`
-        if (dueNow(now, timeZone, eventDate, event.time)) {
+        if (dueWithinWindow(now, timeZone, eventDate, event.time, 5)) {
           await sendReminder(record.userId, `calendar:${event.id}:${today}:${event.time}`, { title: `📅 ${event.title}`, body: event.notes || `${event.type || 'Event'} reminder`, tag: `calendar-${event.id}`, url: '/calendar' })
         }
       }
@@ -245,7 +292,7 @@ async function runReminderScheduler() {
       // Borrow / lend return reminders.
       for (const loan of Array.isArray(state.loans) ? state.loans : []) {
         if (!loan?.id || loan.returned || !loan.reminderEnabled || !loan.returnDate || !loan.returnTime) continue
-        if (dueNow(now, timeZone, loan.returnDate, loan.returnTime)) {
+        if (dueWithinWindow(now, timeZone, loan.returnDate, loan.returnTime, 5)) {
           const verb = loan.direction === 'borrowed' ? `Return ${loan.person}'s money` : `Follow up with ${loan.person}`
           await sendReminder(record.userId, `loan:${loan.id}:${loan.returnDate}:${loan.returnTime}`, { title: `💰 ${verb}`, body: `${loan.direction === 'borrowed' ? 'Borrowed' : 'Lent'} amount: ${settings.currency || '₹'}${Number(loan.amount || 0).toLocaleString()}`, tag: `loan-${loan.id}`, url: '/finance' })
         }
@@ -276,7 +323,7 @@ mongoose.connect(MONGODB_URI)
       console.log(`Adn Tracker API listening on port ${PORT}`)
       if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
         setTimeout(runReminderScheduler, 5000)
-        setInterval(runReminderScheduler, 30_000)
+        setInterval(runReminderScheduler, 15_000)
         console.log('Background reminder scheduler enabled')
       }
     })

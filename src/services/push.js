@@ -8,12 +8,30 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)))
 }
 
+const authHeaders = () => {
+  const token = localStorage.getItem(TOKEN_KEY)
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+}
+
 async function getPublicKey() {
   const response = await fetch(`${API_BASE_URL}/push/public-key`)
-  if (!response.ok) throw new Error('Background notifications are not configured on the server yet.')
-  const data = await response.json()
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(data.message || 'Background notifications are not configured on the server yet.')
   if (!data?.publicKey) throw new Error('Background notification key is missing.')
   return data.publicKey
+}
+
+export async function getBackgroundNotificationStatus() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`)
+    const data = await response.json().catch(() => ({}))
+    return { ok: response.ok, pushConfigured: Boolean(data?.pushConfigured), data }
+  } catch {
+    return { ok: false, pushConfigured: false, data: null }
+  }
 }
 
 export function pushConfigAvailable() {
@@ -38,14 +56,21 @@ export async function subscribeToBackgroundNotifications() {
 
   const response = await fetch(`${API_BASE_URL}/push/subscribe`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    headers: authHeaders(),
     body: JSON.stringify({ subscription: subscription.toJSON(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
   })
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    throw new Error(data.message || 'Could not register background notifications.')
-  }
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(data.message || 'Could not register background notifications.')
   return { ok: true }
+}
+
+export async function testBackgroundNotification() {
+  const token = localStorage.getItem(TOKEN_KEY)
+  if (!token) return { ok: false, reason: 'You must be signed in.' }
+  const response = await fetch(`${API_BASE_URL}/push/test`, { method: 'POST', headers: authHeaders() })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(data.message || 'Test notification could not be sent.')
+  return { ok: true, message: data.message }
 }
 
 export async function requestAndSubscribeToBackgroundNotifications() {

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useApp } from '../context/AppContext.jsx'
 import { ConfirmModal } from '../components/shared/Modal.jsx'
 import { getStudyMinutes, getStudyStreak, getStudyMinutesRange } from '../utils/calculations.js'
-import { toDateStr, pastDays, getWeekDates, formatDateShort } from '../utils/dateHelpers.js'
+import { toDateStr, pastDays, getWeekDates, formatDateShort , formatTime12 } from '../utils/dateHelpers.js'
 import { nanoid } from '../utils/nanoid.js'
 import { fireNotification, requestNotificationPermission } from '../hooks/usePrayerReminders.js'
 import {
@@ -416,7 +416,7 @@ function ScheduleCard({ item, isTimerOpen, onPlay, onEdit, onDelete, onComplete 
               </span>
               {item.time && (
                 <span className="flex items-center gap-1 text-xs" style={{ color: '#555' }}>
-                  <Clock size={10} /> {item.time}
+                  <Clock size={10} /> {formatTime12(item.time)}
                 </span>
               )}
               <span className="px-2 py-0.5 rounded-full text-xs font-semibold"
@@ -890,7 +890,7 @@ function AutoScheduleModal({ onSave, onClose }) {
               })}
             </div>
             <p className="text-xs mt-2 pt-2 border-t border-slate-700" style={{ color: '#888', width: '100%', maxWidth: '100%', overflowWrap: 'anywhere' }}>
-              Total time: {subjects.length * sessionDuration} mins ({startTime} → {endTime})
+              Total time: {subjects.length * sessionDuration} mins ({formatTime12(startTime)} → {formatTime12(endTime)})
             </p>
           </div>
 
@@ -1170,7 +1170,7 @@ export default function Study() {
                   </div>
                   <p className="text-xs mt-0.5" style={{ color: '#444' }}>
                     {session.date}
-                    {session.startTime && ` · ${session.startTime}${session.endTime ? `–${session.endTime}` : ''}`}
+                    {session.startTime && ` · ${formatTime12(session.startTime)}${session.endTime ? `–${formatTime12(session.endTime)}` : ''}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">

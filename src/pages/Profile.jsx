@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
-import { Download, RotateCcw, LogOut } from 'lucide-react'
+import { Download, RotateCcw, LogOut, Bell, CheckCircle2, AlertCircle, Send } from 'lucide-react'
 import storage from '../services/storage.js'
 import { enableBackgroundNotifications } from '../hooks/usePrayerReminders.js'
+import { getBackgroundNotificationStatus, testBackgroundNotification } from '../services/push.js'
 
 const AVATAR_ICONS = ['✨', '🧑‍💻', '🌙', '🎯', '⚡', '🔥', '🌞', '💎']
 const PROFILE_IMAGES = ['👤', '😀', '😎', '🤖', '🧑‍🎨', '👩‍💼', '🧑‍🚀', '🧑‍💼']
@@ -85,10 +86,26 @@ export default function Profile() {
   const settings = state.settings
   const [confirmReset, setConfirmReset] = useState(false)
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [pushStatus, setPushStatus] = useState({ loading: true, configured: false, subscribed: false, error: '' })
+  const [pushBusy, setPushBusy] = useState(false)
 
   const update = (key, value) => dispatch({ type: 'UPDATE_SETTINGS', payload: { [key]: value } })
   const updateNotif = (key, value) =>
     dispatch({ type: 'UPDATE_SETTINGS', payload: { notifications: { ...settings.notifications, [key]: value } } })
+
+  const refreshPushStatus = async () => {
+    setPushStatus(s => ({ ...s, loading: true, error: '' }))
+    const server = await getBackgroundNotificationStatus()
+    let subscribed = false
+    try {
+      const registration = 'serviceWorker' in navigator ? await navigator.serviceWorker.ready : null
+      subscribed = Boolean(await registration?.pushManager?.getSubscription())
+    } catch {}
+    setPushStatus({ loading: false, configured: server.pushConfigured, subscribed, error: server.ok ? '' : 'Cannot reach notification server.' })
+  }
+
+  React.useEffect(() => { refreshPushStatus() }, [])
+
 
   const exportData = () => {
     const data = storage.exportAll()
@@ -430,21 +447,44 @@ export default function Profile() {
       {/* Notifications */}
       <Section title="Reminders">
         <Row label="Background notifications" subtitle="Receive reminders when Adn Tracker is closed">
+          <div className="flex items-center gap-2">
+            {pushStatus.configured && pushStatus.subscribed ? <CheckCircle2 size={16} className="text-emerald-400" /> : <AlertCircle size={16} className="text-amber-400" />}
+            <button
+              type="button"
+              disabled={pushBusy}
+              onClick={async () => {
+                setPushBusy(true)
+                try {
+                  const result = await enableBackgroundNotifications()
+                  if (!result?.ok && result?.reason) throw new Error(result.reason)
+                  await refreshPushStatus()
+                  alert('Background notifications enabled.')
+                } catch (error) {
+                  setPushStatus(s => ({ ...s, error: error?.message || 'Could not enable background notifications.' }))
+                } finally { setPushBusy(false) }
+              }}
+              className="px-3 py-2 rounded-xl bg-violet-600 text-white text-xs font-semibold disabled:opacity-50"
+            >
+              {pushBusy ? 'Setting up…' : (pushStatus.subscribed ? 'Enable / Refresh' : 'Enable')}
+            </button>
+          </div>
+        </Row>
+        <div className={`rounded-xl border p-3 text-xs ${pushStatus.configured && pushStatus.subscribed ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-300' : 'border-amber-500/20 bg-amber-500/5 text-amber-300'}`}>
+          {pushStatus.loading ? 'Checking notification server…' : pushStatus.configured ? (pushStatus.subscribed ? 'Background push is ready. Test it before relying on reminders.' : 'Server push is ready. Enable notifications on this phone.') : 'Background notifications are not configured on the server yet. Add the VAPID keys to Render, then tap Enable / Refresh.'}
+          {pushStatus.error && <div className="mt-1 text-red-300">{pushStatus.error}</div>}
+        </div>
+        {pushStatus.configured && pushStatus.subscribed && (
           <button
             type="button"
             onClick={async () => {
-              try {
-                const result = await enableBackgroundNotifications()
-                if (!result?.ok && result?.reason) alert(result.reason)
-              } catch (error) {
-                alert(error?.message || 'Could not enable background notifications.')
-              }
+              try { await testBackgroundNotification(); alert('Test notification sent. Lock the phone and check the notification.'); }
+              catch (error) { alert(error?.message || 'Test notification failed.') }
             }}
-            className="px-3 py-2 rounded-xl bg-violet-600 text-white text-xs font-semibold"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold"
           >
-            {typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'Enable / Refresh' : 'Enable'}
+            <Send size={13} /> Send test notification
           </button>
-        </Row>
+        )}
         {Object.entries(settings.notifications || {}).map(([key, val]) => (
           <Row key={key} label={key.charAt(0).toUpperCase() + key.slice(1) + ' reminder'}>
             <Toggle checked={!!val} onChange={v => updateNotif(key, v)} />

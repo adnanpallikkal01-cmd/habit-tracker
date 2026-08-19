@@ -4,7 +4,7 @@ import ProgressRing from '../components/shared/ProgressRing.jsx'
 import StreakCard from '../components/shared/StreakCard.jsx'
 import { PRAYER_NAMES, PRAYER_STATUSES } from '../data/categories.js'
 import { getPrayerStats, getPrayerStreak, getMonthlyPrayerRate } from '../utils/calculations.js'
-import { toDateStr, daysInMonth, currentMonth, pastDays } from '../utils/dateHelpers.js'
+import { toDateStr, daysInMonth, currentMonth, pastDays, formatTime12 } from '../utils/dateHelpers.js'
 import { requestNotificationPermission } from '../hooks/usePrayerReminders.js'
 import { Bell, BellOff, Clock } from 'lucide-react'
 
@@ -176,7 +176,7 @@ export default function Prayer() {
             <Clock size={16} className="text-violet-400 flex-shrink-0" />
             <div className="flex-1">
               <span className="text-white font-semibold text-sm">{nextPrayer.name}</span>
-              <span className="text-slate-400 text-xs ml-2">{nextPrayer.time}</span>
+              <span className="text-slate-400 text-xs ml-2">{formatTime12(nextPrayer.time)}</span>
             </div>
             <span className="text-violet-300 text-sm font-medium">
               {nextPrayer.hrs > 0 ? `${nextPrayer.hrs}h ` : ''}{nextPrayer.mins}m away
@@ -274,7 +274,7 @@ export default function Prayer() {
                     <span className="text-xs text-slate-500">{arabicName}</span>
                   </div>
                   <span className="text-xs text-slate-500">
-                    <Clock size={10} className="inline mr-1" />{reminderTime}
+                    <Clock size={10} className="inline mr-1" />{formatTime12(reminderTime)}
                   </span>
                 </div>
                 <div className="flex gap-1.5">
