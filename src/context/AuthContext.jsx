@@ -38,27 +38,41 @@ export function AuthProvider({ children }) {
   }, [])
 
   const signup = useCallback(async (email, password) => {
-    const res = await fetch(`${API_BASE_URL}/auth/signup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.message || 'Sign up failed')
-    saveToken(data.token, data.user)
-    return data
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message || 'Sign up failed')
+      saveToken(data.token, data.user)
+      return data
+    } catch (err) {
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        throw new Error('Cannot reach the server. Please check your VITE_API_URL environment variable in Netlify points to your deployed backend.')
+      }
+      throw err
+    }
   }, [saveToken])
 
   const login = useCallback(async (email, password) => {
-    const res = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.message || 'Login failed')
-    saveToken(data.token, data.user)
-    return data
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message || 'Login failed')
+      saveToken(data.token, data.user)
+      return data
+    } catch (err) {
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        throw new Error('Cannot reach the server. Please check your VITE_API_URL environment variable in Netlify points to your deployed backend.')
+      }
+      throw err
+    }
   }, [saveToken])
 
   const logout = useCallback(() => {
