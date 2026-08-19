@@ -14,6 +14,7 @@ import {
   getDailyScore, getWeeklyHabitCompletion, getGymCount
 } from '../utils/calculations.js'
 import { toDateStr, getWeekDates, formatDateShort, startOfMonth } from '../utils/dateHelpers.js'
+import Today from './Today.jsx'
 
 export default function Dashboard() {
   const { state } = useApp()
@@ -323,6 +324,15 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 gap-4">
         <StreakCard current={prayerStreak.current} best={prayerStreak.best} label="Prayer Streak" />
         <StreakCard current={gymStreak.current} best={gymStreak.best} label="Gym Streak" />
+      </div>
+      <div className="pt-2">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-base font-bold text-white">Today</h2>
+            <p className="text-xs text-slate-500">Complete your daily checklist from the dashboard.</p>
+          </div>
+        </div>
+        <Today embedded />
       </div>
     </div>
   )

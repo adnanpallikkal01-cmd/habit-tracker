@@ -13,11 +13,11 @@ import {
   useWaterReminder,
   requestNotificationPermission,
   useStudyReminderScheduler,
+  enableBackgroundNotifications,
 } from './hooks/usePrayerReminders.js'
 
 // Pages
 import Dashboard from './pages/Dashboard.jsx'
-import Today from './pages/Today.jsx'
 import Habits from './pages/Habits.jsx'
 import Prayer from './pages/Prayer.jsx'
 import Study from './pages/Study.jsx'
@@ -25,10 +25,8 @@ import Fitness from './pages/Fitness.jsx'
 import Water from './pages/Water.jsx'
 import Finance from './pages/Finance.jsx'
 import Budget from './pages/Budget.jsx'
-import Goals from './pages/Goals.jsx'
 import Growth from './pages/Growth.jsx'
 import Calendar from './pages/Calendar.jsx'
-import Analytics from './pages/Analytics.jsx'
 import Profile from './pages/Profile.jsx'
 
 // ── Notification permission banner ───────────────────────────────
@@ -97,6 +95,12 @@ function AppShell() {
   useWaterReminder(state.settings?.waterReminderEnabled ?? false)
   useStudyReminderScheduler(state.studyScheduled || [], dispatch)
 
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+    if (Notification.permission !== 'granted') return
+    enableBackgroundNotifications().catch(() => {})
+  }, [])
+
   return (
     <div className="app-shell flex h-screen overflow-hidden">
       <Sidebar />
@@ -111,7 +115,6 @@ function AppShell() {
             }>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/today" element={<Today />} />
                 <Route path="/habits" element={<Habits />} />
                 <Route path="/prayer" element={<Prayer />} />
                 <Route path="/study" element={<Study />} />
@@ -119,10 +122,8 @@ function AppShell() {
                 <Route path="/water" element={<Water />} />
                 <Route path="/finance" element={<Finance />} />
                 <Route path="/budget" element={<Budget />} />
-                <Route path="/goals" element={<Goals />} />
                 <Route path="/growth" element={<Growth />} />
                 <Route path="/calendar" element={<Calendar />} />
-                <Route path="/analytics" element={<Analytics />} />
                 <Route path="/profile" element={<Profile />} />
               </Routes>
             </Suspense>

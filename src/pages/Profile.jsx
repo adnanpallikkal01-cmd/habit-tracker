@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { Download, RotateCcw, LogOut } from 'lucide-react'
 import storage from '../services/storage.js'
+import { enableBackgroundNotifications } from '../hooks/usePrayerReminders.js'
 
 const AVATAR_ICONS = ['✨', '🧑‍💻', '🌙', '🎯', '⚡', '🔥', '🌞', '💎']
 const PROFILE_IMAGES = ['👤', '😀', '😎', '🤖', '🧑‍🎨', '👩‍💼', '🧑‍🚀', '🧑‍💼']
@@ -428,6 +429,22 @@ export default function Profile() {
 
       {/* Notifications */}
       <Section title="Reminders">
+        <Row label="Background notifications" subtitle="Receive reminders when Adn Tracker is closed">
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const result = await enableBackgroundNotifications()
+                if (!result?.ok && result?.reason) alert(result.reason)
+              } catch (error) {
+                alert(error?.message || 'Could not enable background notifications.')
+              }
+            }}
+            className="px-3 py-2 rounded-xl bg-violet-600 text-white text-xs font-semibold"
+          >
+            {typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'Enable / Refresh' : 'Enable'}
+          </button>
+        </Row>
         {Object.entries(settings.notifications || {}).map(([key, val]) => (
           <Row key={key} label={key.charAt(0).toUpperCase() + key.slice(1) + ' reminder'}>
             <Toggle checked={!!val} onChange={v => updateNotif(key, v)} />

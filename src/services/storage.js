@@ -26,6 +26,8 @@ const keys = {
   transactions: `${NS}transactions`,
   budgets: `${NS}budgets`,
   goals: `${NS}goals`,
+  calendarEvents: `${NS}calendarEvents`,
+  loans: `${NS}loans`,
 }
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/$/, '')

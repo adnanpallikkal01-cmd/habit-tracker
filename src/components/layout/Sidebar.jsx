@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard, CheckSquare, Flame, BookOpen, Dumbbell,
-  Droplets, Wallet, PiggyBank, Target, TrendingUp,
-  Calendar, BarChart3, User, ChevronLeft, ChevronRight,
+  LayoutDashboard, Flame, BookOpen, Dumbbell,
+  Droplets, Wallet, PiggyBank, TrendingUp,
+  Calendar, User, ChevronLeft, ChevronRight,
   Heart
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext.jsx'
@@ -20,7 +20,6 @@ function AdnLogoMark({ className = '' }) {
 
 const NAV_ITEMS = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/today', icon: CheckSquare, label: 'Today' },
   { to: '/habits', icon: Flame, label: 'Habits' },
   { to: '/prayer', icon: Heart, label: 'Prayer' },
   { to: '/study', icon: BookOpen, label: 'Study' },
@@ -28,10 +27,8 @@ const NAV_ITEMS = [
   { to: '/water', icon: Droplets, label: 'Water' },
   { to: '/finance', icon: Wallet, label: 'Finance' },
   { to: '/budget', icon: PiggyBank, label: 'Budget' },
-  { to: '/goals', icon: Target, label: 'Goals' },
   { to: '/growth', icon: TrendingUp, label: 'Growth' },
   { to: '/calendar', icon: Calendar, label: 'Calendar' },
-  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/profile', icon: User, label: 'Profile' },
 ]
 

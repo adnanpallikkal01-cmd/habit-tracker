@@ -13,7 +13,7 @@ import { ChevronDown, Droplets, Plus } from 'lucide-react'
 const STATUS_CYCLE = ['pending', 'completed', 'partial', 'missed', 'na']
 const PRAYER_STATUS_CYCLE = ['pending', 'completed', 'qadha', 'missed']
 
-export default function Today() {
+export default function Today({ embedded = false }) {
   const { state, dispatch } = useApp()
   const today = toDateStr()
   const [expandedSections, setExpandedSections] = useState({
@@ -100,7 +100,7 @@ export default function Today() {
   )
 
   return (
-    <div className="space-y-6 pb-24 md:pb-6">
+    <div className={`space-y-6 ${embedded ? '' : 'pb-24 md:pb-6'}`.trim()}>
       {/* Daily Score Hero */}
       <div className="flex items-center gap-4 p-5 rounded-2xl bg-gradient-to-br from-indigo-900/60 to-violet-900/40 border border-indigo-700/30">
         <ProgressRing

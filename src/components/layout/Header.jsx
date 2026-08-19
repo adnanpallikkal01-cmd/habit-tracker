@@ -1,11 +1,10 @@
 import React from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext.jsx'
 import { getGreeting, formatDateFull, toDateStr } from '../../utils/dateHelpers.js'
 
 const PAGE_TITLES = {
   '/': 'Dashboard',
-  '/today': 'Today',
   '/habits': 'Habits',
   '/prayer': 'Prayer',
   '/study': 'Study',
@@ -13,16 +12,15 @@ const PAGE_TITLES = {
   '/water': 'Water',
   '/finance': 'Finance',
   '/budget': 'Budget',
-  '/goals': 'Goals',
   '/growth': 'Growth',
   '/calendar': 'Calendar',
-  '/analytics': 'Analytics',
   '/profile': 'Profile',
 }
 
 export default function Header() {
   const { state } = useApp()
   const location = useLocation()
+  const navigate = useNavigate()
   const name = state.settings?.userName || ''
   const profileIcon = state.settings?.profileIcon || '✨'
   const profileImage = state.settings?.profileImage
@@ -45,7 +43,7 @@ export default function Header() {
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <button type="button" onClick={() => navigate('/profile')} aria-label="Open profile" className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-violet-400/60">
         {profileImage ? (
           <img src={profileImage} alt={name} className="h-9 w-9 rounded-full object-cover shadow-[0_10px_20px_rgba(139,92,246,0.35)]" />
         ) : (
@@ -53,7 +51,7 @@ export default function Header() {
             {profileIcon}
           </div>
         )}
-      </div>
+      </button>
     </header>
   )
 }

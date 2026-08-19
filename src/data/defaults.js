@@ -3,6 +3,7 @@ export const DEFAULT_SETTINGS = {
   profileIcon: '👤',
   profileImage: '',
   currency: '₹',
+  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata',
   theme: 'dark',
   weekStart: 'monday',
   dailyWaterTarget: 0,
