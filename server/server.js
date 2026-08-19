@@ -250,59 +250,85 @@ async function runReminderScheduler() {
   try {
     const records = await State.find({}).lean()
     const now = new Date()
+
     for (const record of records) {
       const state = record.state || {}
       const settings = state.settings || {}
       const timeZone = settings.timeZone || 'Asia/Kolkata'
       const local = getLocalParts(now, timeZone)
       const today = `${local.year}-${local.month}-${local.day}`
-      const currentTime = `${local.hour}:${local.minute}`
 
-      // Daily prayer reminders.
-      if (settings.notifications?.prayer !== false) {
+      // Helper: send only when a reminder is enabled and its scheduled time is
+      // within the last 5 minutes. This makes short Render wake-up delays safe.
+      const sendIfDue = async (kind, id, dateStr, timeStr, payload) => {
+        if (!id || !dateStr || !timeStr) return
+        if (!dueWithinWindow(now, timeZone, dateStr, timeStr, 5)) return
+        await sendReminder(record.userId, `${kind}:${id}:${dateStr}:${timeStr}`, payload)
+      }
+
+      // Daily prayer reminders. Use the saved prayer times and the user's
+      // notification preference. Empty times are ignored.
+      if (settings.notifications?.prayer === true) {
+        const labels = {
+          fajr: ['🌅', 'Fajr', 'الفجر'],
+          dhuhr: ['☀️', 'Dhuhr', 'الظهر'],
+          asr: ['🌤️', 'Asr', 'العصر'],
+          maghrib: ['🌇', 'Maghrib', 'المغرب'],
+          isha: ['🌙', 'Isha', 'العشاء'],
+        }
         for (const [prayerId, time] of Object.entries(settings.prayerTimes || {})) {
-          if (time && dueWithinWindow(now, timeZone, today, time, 5)) {
-            const labels = { fajr:['🌅','Fajr','الفجر'], dhuhr:['☀️','Dhuhr','الظهر'], asr:['🌤️','Asr','العصر'], maghrib:['🌇','Maghrib','المغرب'], isha:['🌙','Isha','العشاء'] }
-            const meta = labels[prayerId] || ['🤲', prayerId, '']
-            await sendReminder(record.userId, `prayer:${today}:${prayerId}`, { title: `${meta[0]} Time for ${meta[1]} Prayer`, body: `${meta[2]} — It's prayer time. Don't miss it! 🤲`, tag: `prayer-${prayerId}`, url: '/prayer' })
-          }
+          if (!time) continue
+          const meta = labels[prayerId] || ['🤲', prayerId, '']
+          await sendIfDue(
+            'prayer', prayerId, today, time,
+            { title: `${meta[0]} Time for ${meta[1]} Prayer`, body: `${meta[2]} — It's prayer time. Don't miss it! 🤲`, tag: `prayer-${prayerId}`, url: '/prayer' }
+          )
         }
       }
 
-      // Study schedules.
+      // Study schedules. The UI stores the flag as `reminder`, while older
+      // records may use `reminderEnabled`; support both.
       for (const item of Array.isArray(state.studyScheduled) ? state.studyScheduled : []) {
-        const reminderEnabled = item?.reminderEnabled ?? item?.reminder ?? false
+        const reminderEnabled = item?.reminderEnabled === true || item?.reminder === true
         const hint = item?.reminderTime || item?.time || item?.startTime
-        if (!item?.id || !reminderEnabled || item.completed || item.notificationSentAt || !item.date || !hint) continue
-        if (dueWithinWindow(now, timeZone, item.date, hint, 5)) {
-          await sendReminder(record.userId, `study:${item.id}:${item.date}:${hint}`, { title: `📚 ${item.topic || item.subject || 'Study session'} is starting`, body: `Your scheduled study session starts at ${formatTime12(hint)}.`, tag: `study-${item.id}`, url: '/study' })
-        }
+        if (!item?.id || !reminderEnabled || item.completed || !item.date || !hint) continue
+        await sendIfDue(
+          'study', item.id, item.date, hint,
+          { title: `📚 ${item.topic || item.subject || 'Study session'} is starting`, body: `Your scheduled study session starts at ${formatTime12(hint)}.`, tag: `study-${item.id}`, url: '/study' }
+        )
       }
 
       // Calendar events.
       for (const event of Array.isArray(state.calendarEvents) ? state.calendarEvents : []) {
         if (!event?.id || !event.reminderEnabled || !event.date || !event.time) continue
-        let eventDate = event.date
-        if (event.repeatAnnually) eventDate = `${today.slice(0,4)}-${event.date.slice(5,10)}`
-        if (dueWithinWindow(now, timeZone, eventDate, event.time, 5)) {
-          await sendReminder(record.userId, `calendar:${event.id}:${today}:${event.time}`, { title: `📅 ${event.title}`, body: event.notes || `${event.type || 'Event'} reminder`, tag: `calendar-${event.id}`, url: '/calendar' })
-        }
+        const eventDate = event.repeatAnnually ? `${today.slice(0, 4)}-${event.date.slice(5, 10)}` : event.date
+        await sendIfDue(
+          'calendar', event.id, eventDate, event.time,
+          { title: `📅 ${event.title}`, body: event.notes || `${event.type || 'Event'} reminder`, tag: `calendar-${event.id}`, url: '/calendar' }
+        )
       }
 
       // Borrow / lend return reminders.
       for (const loan of Array.isArray(state.loans) ? state.loans : []) {
         if (!loan?.id || loan.returned || !loan.reminderEnabled || !loan.returnDate || !loan.returnTime) continue
-        if (dueWithinWindow(now, timeZone, loan.returnDate, loan.returnTime, 5)) {
-          const verb = loan.direction === 'borrowed' ? `Return ${loan.person}'s money` : `Follow up with ${loan.person}`
-          await sendReminder(record.userId, `loan:${loan.id}:${loan.returnDate}:${loan.returnTime}`, { title: `💰 ${verb}`, body: `${loan.direction === 'borrowed' ? 'Borrowed' : 'Lent'} amount: ${settings.currency || '₹'}${Number(loan.amount || 0).toLocaleString()}`, tag: `loan-${loan.id}`, url: '/finance' })
-        }
+        const verb = loan.direction === 'borrowed' ? `Return ${loan.person}'s money` : `Follow up with ${loan.person}`
+        await sendIfDue(
+          'loan', loan.id, loan.returnDate, loan.returnTime,
+          { title: `💰 ${verb}`, body: `${loan.direction === 'borrowed' ? 'Borrowed' : 'Lent'} amount: ${settings.currency || '₹'}${Number(loan.amount || 0).toLocaleString()}`, tag: `loan-${loan.id}`, url: '/finance' }
+        )
       }
 
-      // Optional water reminders every 15 minutes, matching the existing setting.
-      if (settings.waterReminderEnabled || settings.notifications?.water) {
-        const minute = Number(local.minute)
-        if (minute % 15 === 0) {
-          await sendReminder(record.userId, `water:${today}:${local.hour}:${local.minute}`, { title: '💧 Time to Drink Water!', body: 'Stay hydrated — have a glass of water now! 🥤', tag: 'water-reminder', url: '/water' })
+      // Water reminders. Interval is configurable from Profile (15/30/45/60/90/120).
+      if (settings.waterReminderEnabled || settings.notifications?.water === true) {
+        const interval = Math.max(5, Number(settings.waterReminderIntervalMinutes || 15))
+        const minuteOfDay = Number(local.hour) * 60 + Number(local.minute)
+        if (minuteOfDay % interval === 0) {
+          await sendReminder(record.userId, `water:${today}:${Math.floor(minuteOfDay / interval)}`, {
+            title: '💧 Time to Drink Water!',
+            body: 'Stay hydrated — have a glass of water now! 🥤',
+            tag: 'water-reminder',
+            url: '/water'
+          })
         }
       }
     }

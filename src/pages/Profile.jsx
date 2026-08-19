@@ -397,6 +397,11 @@ export default function Profile() {
             step={250}
           />
         </Row>
+        <Row label="Water reminder interval" subtitle={`Remind me every ${settings.waterReminderIntervalMinutes || 15} minutes`}>
+          <select value={settings.waterReminderIntervalMinutes || 15} onChange={e => update('waterReminderIntervalMinutes', Number(e.target.value))} className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+            {[15,30,45,60,90,120].map(m => <option key={m} value={m}>{m} minutes</option>)}
+          </select>
+        </Row>
         <Row label="Study Target (hours)" subtitle={`Currently: ${settings.dailyStudyTarget}h per day`}>
           <NumberInput
             value={settings.dailyStudyTarget}

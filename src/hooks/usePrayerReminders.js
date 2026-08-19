@@ -97,7 +97,7 @@ export function useStudyReminderScheduler(scheduleItems, dispatch) {
       const now = Date.now()
       scheduleItems.forEach(item => {
         const reminderEnabled = item?.reminderEnabled ?? item?.reminder ?? false
-        if (!item || !item.id || !reminderEnabled || item.completed || item.notificationSentAt) return
+        if (!item || !item.id || !reminderEnabled || item.completed) return
         const hint = item.reminderTime || item.time || item.startTime
         if (!item.date || !hint) return
         const reminderMs = new Date(`${item.date}T${hint}`).getTime()
@@ -105,7 +105,7 @@ export function useStudyReminderScheduler(scheduleItems, dispatch) {
         if (now >= reminderMs && !handledRef.current[key]) {
           handledRef.current[key] = true
           fireNotification(`📚 ${item.topic || item.subject || 'Study session'} is starting`, `Your scheduled study session starts at ${hint}.`, `study-reminder-${item.id}`)
-          dispatch({ type: 'UPDATE_STUDY_SCHEDULE', payload: { ...item, reminderEnabled: true, notificationSentAt: new Date().toISOString() } })
+          dispatch({ type: 'UPDATE_STUDY_SCHEDULE', payload: { ...item } })
         }
       })
     }

@@ -10,6 +10,7 @@ export const DEFAULT_SETTINGS = {
   dailyStudyTarget: 0,
   monthlyBudget: 0,
   waterReminderEnabled: false,
+  waterReminderIntervalMinutes: 15,
   scoreWeights: {
     prayer: 20,
     study: 20,
