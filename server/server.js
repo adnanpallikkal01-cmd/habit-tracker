@@ -17,7 +17,10 @@ if (!MONGODB_URI) {
   process.exit(1)
 }
 
-app.use(cors({ origin: FRONTEND_ORIGIN === '*' ? true : FRONTEND_ORIGIN.split(',').map(v => v.trim()) }))
+app.use(cors({
+  origin: FRONTEND_ORIGIN,
+  credentials: true
+}));
 app.use(express.json({ limit: '10mb' }))
 
 // ── Schemas ───────────────────────────────────────────────────────
