@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
-import { Download, RotateCcw } from 'lucide-react'
+import { useAuth } from '../context/AuthContext.jsx'
+import { Download, RotateCcw, LogOut } from 'lucide-react'
 import storage from '../services/storage.js'
 
 const AVATAR_ICONS = ['✨', '🧑‍💻', '🌙', '🎯', '⚡', '🔥', '🌞', '💎']
@@ -53,10 +54,36 @@ function Toggle({ checked, onChange }) {
   )
 }
 
+// Compress profile image to max 300×300 JPEG 70% — keeps localStorage size small on mobile
+async function compressImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        const MAX = 300
+        let { width, height } = img
+        if (width > MAX || height > MAX) {
+          if (width > height) { height = Math.round((height * MAX) / width); width = MAX }
+          else { width = Math.round((width * MAX) / height); height = MAX }
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width; canvas.height = height
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL('image/jpeg', 0.7))
+      }
+      img.src = e.target.result
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function Profile() {
   const { state, dispatch } = useApp()
+  const { logout, user } = useAuth()
   const settings = state.settings
   const [confirmReset, setConfirmReset] = useState(false)
+  const [confirmLogout, setConfirmLogout] = useState(false)
 
   const update = (key, value) => dispatch({ type: 'UPDATE_SETTINGS', payload: { [key]: value } })
   const updateNotif = (key, value) =>
@@ -299,22 +326,28 @@ export default function Profile() {
         </div>
 
         <div className="flex items-center gap-3 pt-2">
-          <label
+            <label
             className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-indigo-500/40 bg-indigo-600/15 px-4 py-2 text-sm font-medium text-indigo-300 transition hover:bg-indigo-600/25"
           >
             <input
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={(e) => {
+              onChange={async (e) => {
                 const file = e.target.files?.[0]
                 if (!file) return
-                const reader = new FileReader()
-                reader.onload = (event) => {
-                  update('profileImage', event.target?.result || '')
+                try {
+                  const compressed = await compressImage(file)
+                  update('profileImage', compressed)
                   update('profileIcon', '✨')
+                } catch {
+                  const reader = new FileReader()
+                  reader.onload = (event) => {
+                    update('profileImage', event.target?.result || '')
+                    update('profileIcon', '✨')
+                  }
+                  reader.readAsDataURL(file)
                 }
-                reader.readAsDataURL(file)
               }}
             />
             From Gallery
@@ -441,6 +474,30 @@ export default function Profile() {
               }`}
           >
             <RotateCcw size={14} /> {confirmReset ? 'Confirm Reset?' : 'Reset'}
+          </button>
+        </Row>
+      </Section>
+
+      {/* Account */}
+      <Section title="Account">
+        <Row label="Signed in as" subtitle={user?.email || 'Your account'}>
+          <button
+            id="profile-logout"
+            onClick={() => {
+              if (confirmLogout) {
+                logout()
+              } else {
+                setConfirmLogout(true)
+                setTimeout(() => setConfirmLogout(false), 4000)
+              }
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all
+              ${confirmLogout
+                ? 'bg-orange-600 text-white border-orange-600 animate-pulse'
+                : 'bg-orange-500/10 text-orange-400 border-orange-500/30 hover:bg-orange-500/20'
+              }`}
+          >
+            <LogOut size={14} /> {confirmLogout ? 'Confirm Sign Out?' : 'Sign Out'}
           </button>
         </Row>
       </Section>

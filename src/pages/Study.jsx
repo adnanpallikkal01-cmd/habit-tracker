@@ -8,7 +8,7 @@ import { fireNotification, requestNotificationPermission } from '../hooks/usePra
 import {
   Play, Pause, Square, Plus, Trash2, BookOpen,
   Coffee, Bell, BellOff, Clock, X, Edit2, ChevronDown,
-  Calendar, AlarmClock, Zap, Flame, TrendingUp
+  Calendar, AlarmClock, Zap, Flame, TrendingUp, CheckCircle2
 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
@@ -374,29 +374,45 @@ function TimerPanel({ schedule, onClose, onSave }) {
 // ─────────────────────────────────────────────────────────────────
 // Schedule Card
 // ─────────────────────────────────────────────────────────────────
-function ScheduleCard({ item, isTimerOpen, onPlay, onEdit, onDelete }) {
+function ScheduleCard({ item, isTimerOpen, onPlay, onEdit, onDelete, onComplete }) {
   const isPast = item.date < toDateStr() && item.date !== toDateStr()
+  const isCompleted = !!item.completed
 
   return (
     <div className="study-card study-card-hover animate-studyCardIn transition-all"
-      style={{ border: isTimerOpen ? '1px solid #5C2D91' : '1px solid #1a1a1a' }}>
+      style={{
+        border: isCompleted
+          ? '1px solid rgba(34,197,94,0.35)'
+          : isTimerOpen ? '1px solid #5C2D91' : '1px solid #1a1a1a',
+        opacity: isCompleted ? 0.75 : 1,
+      }}>
       <div className="p-4">
         <div className="flex items-start gap-3">
           {/* Emoji icon */}
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
-            style={{ background: '#1a1a1a' }}>
-            {getEmoji(item.subject || item.topic)}
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg relative"
+            style={{ background: isCompleted ? 'rgba(34,197,94,0.12)' : '#1a1a1a' }}>
+            {isCompleted
+              ? <CheckCircle2 size={20} style={{ color: '#22c55e' }} />
+              : getEmoji(item.subject || item.topic)
+            }
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-white truncate">{item.topic}</p>
+            <div className="flex items-center gap-2">
+              <p className={`text-sm font-bold truncate ${isCompleted ? 'line-through' : 'text-white'}`}
+                style={{ color: isCompleted ? '#555' : undefined }}>{item.topic}</p>
+              {isCompleted && (
+                <span className="px-1.5 py-0.5 rounded-md text-xs font-bold flex-shrink-0"
+                  style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e' }}>✓ Done</span>
+              )}
+            </div>
             {item.subject && item.subject !== item.topic && (
               <p className="text-xs mt-0.5 truncate" style={{ color: '#5C2D91' }}>{item.subject}</p>
             )}
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
               <span className="flex items-center gap-1 text-xs" style={{ color: '#555' }}>
                 <Calendar size={10} />
-                <span style={{ color: isPast ? '#f87171' : '#EDBB00' }}>{fmtDate(item.date)}</span>
+                <span style={{ color: isCompleted ? '#555' : isPast ? '#f87171' : '#EDBB00' }}>{fmtDate(item.date)}</span>
               </span>
               {item.time && (
                 <span className="flex items-center gap-1 text-xs" style={{ color: '#555' }}>
@@ -417,29 +433,58 @@ function ScheduleCard({ item, isTimerOpen, onPlay, onEdit, onDelete }) {
 
           {/* Actions */}
           <div className="flex items-center gap-1 flex-shrink-0">
-            <button onClick={onEdit}
-              className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-              style={{ background: '#1a1a1a', color: '#555' }}
-              onMouseEnter={e => e.currentTarget.style.color = '#EDBB00'}
-              onMouseLeave={e => e.currentTarget.style.color = '#555'}>
-              <Edit2 size={12} />
-            </button>
-            <button onClick={onDelete}
-              className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-              style={{ background: '#1a1a1a', color: '#555' }}
-              onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
-              onMouseLeave={e => e.currentTarget.style.color = '#555'}>
-              <Trash2 size={12} />
-            </button>
-            <button onClick={onPlay}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
-              style={isTimerOpen
-                ? { background: '#5C2D91', color: '#fff' }
-                : { background: 'rgba(237,187,0,0.12)', color: '#EDBB00', border: '1px solid rgba(237,187,0,0.2)' }}
-              onMouseEnter={e => { if (!isTimerOpen) e.currentTarget.style.background = 'rgba(237,187,0,0.22)' }}
-              onMouseLeave={e => { if (!isTimerOpen) e.currentTarget.style.background = 'rgba(237,187,0,0.12)' }}>
-              {isTimerOpen ? <><ChevronDown size={12} /> Close</> : <><Play size={11} fill="currentColor" /> Start</>}
-            </button>
+            {!isCompleted && (
+              <>
+                <button onClick={onEdit}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                  style={{ background: '#1a1a1a', color: '#555' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#EDBB00'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#555'}>
+                  <Edit2 size={12} />
+                </button>
+                <button onClick={onDelete}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                  style={{ background: '#1a1a1a', color: '#555' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#555'}>
+                  <Trash2 size={12} />
+                </button>
+                <button onClick={onPlay}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={isTimerOpen
+                    ? { background: '#5C2D91', color: '#fff' }
+                    : { background: 'rgba(237,187,0,0.12)', color: '#EDBB00', border: '1px solid rgba(237,187,0,0.2)' }}
+                  onMouseEnter={e => { if (!isTimerOpen) e.currentTarget.style.background = 'rgba(237,187,0,0.22)' }}
+                  onMouseLeave={e => { if (!isTimerOpen) e.currentTarget.style.background = 'rgba(237,187,0,0.12)' }}>
+                  {isTimerOpen ? <><ChevronDown size={12} /> Close</> : <><Play size={11} fill="currentColor" /> Start</>}
+                </button>
+                <button onClick={onComplete}
+                  title="Mark as complete"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(34,197,94,0.22)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(34,197,94,0.1)'}>
+                  <CheckCircle2 size={11} /> Complete
+                </button>
+              </>
+            )}
+            {isCompleted && (
+              <>
+                <button onClick={onDelete}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                  style={{ background: '#1a1a1a', color: '#555' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#555'}>
+                  <Trash2 size={12} />
+                </button>
+                <button onClick={onComplete}
+                  title="Mark as incomplete"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>
+                  <CheckCircle2 size={11} /> Done ✓
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -745,11 +790,11 @@ function AutoScheduleModal({ onSave, onClose }) {
   const endTime = String(endHour).padStart(2, '0') + ':' + String(endMinute).padStart(2, '0')
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
-      style={{ background: 'rgba(0,0,0,0.85)', overflowX: 'hidden' }}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.85)' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-[min(420px,calc(100vw-0.75rem))] max-h-[min(78vh,720px)] overflow-hidden rounded-[20px] animate-scaleIn study-card"
-        style={{ border: '1px solid #2a1a40', width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
+      <div className="w-full overflow-hidden rounded-[20px] animate-scaleIn study-card"
+        style={{ border: '1px solid #2a1a40', maxWidth: '420px', maxHeight: 'min(78vh, 720px)', boxSizing: 'border-box' }}>
         <div className="flex items-center justify-between px-4 pt-4 pb-2" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
           <h2 className="text-base font-bold text-white" style={{ maxWidth: 'calc(100% - 36px)' }}>Auto Schedule</h2>
           <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center"
@@ -915,6 +960,26 @@ export default function Study() {
   const handleDeleteSchedule = (id) => {
     setDeleteTarget({ type: 'schedule', id })
   }
+  const handleCompleteSchedule = (item) => {
+    // Toggle completed flag; if marking complete, also log the session
+    const nowCompleted = !item.completed
+    dispatch({ type: 'UPDATE_STUDY_SCHEDULE', payload: { ...item, completed: nowCompleted } })
+    if (nowCompleted) {
+      dispatch({
+        type: 'ADD_STUDY_SESSION',
+        payload: {
+          id: nanoid(),
+          subject: item.subject || item.topic || 'Study',
+          topic: item.topic,
+          durationMins: item.durationMins,
+          date: item.date || toDateStr(),
+          startTime: item.time || '',
+          endTime: '',
+          notes: 'Marked complete',
+        },
+      })
+    }
+  }
   const handleSaveSession = (sessionData) => {
     dispatch({ type: 'ADD_STUDY_SESSION', payload: { ...sessionData, id: nanoid() } })
   }
@@ -1028,9 +1093,10 @@ export default function Study() {
                   onPlay={() => setActiveTimer(activeTimer === item.id ? null : item.id)}
                   onEdit={() => setEditItem(item)}
                   onDelete={() => handleDeleteSchedule(item.id)}
+                  onComplete={() => handleCompleteSchedule(item)}
                 />
-                {/* Inline Timer */}
-                {activeTimer === item.id && (
+                {/* Inline Timer — only show when not completed */}
+                {activeTimer === item.id && !item.completed && (
                   <div className="mt-2 animate-fadeIn">
                     <TimerPanel
                       key={item.id}

@@ -5,17 +5,6 @@ import { DEFAULT_SETTINGS, DEFAULT_HABITS, DEFAULT_BUDGETS, DEFAULT_GOALS } from
 const AppContext = createContext(null)
 
 // ── Initial State ────────────────────────────────────────────────
-function hasStoredData() {
-  const exported = storage.exportAll()
-  return Object.entries(exported).some(([key, value]) => {
-    if (key === 'userId') return false
-    if (value === null || value === undefined) return false
-    if (Array.isArray(value)) return value.length > 0
-    if (typeof value === 'object') return Object.keys(value).length > 0
-    return value !== ''
-  })
-}
-
 function loadInitialState() {
   const settings = storage.get('settings') || DEFAULT_SETTINGS
   const habits = storage.get('habits') || DEFAULT_HABITS
@@ -156,26 +145,30 @@ function reducer(state, action) {
 }
 
 // ── Provider ─────────────────────────────────────────────────────
-export function AppProvider({ children }) {
+export function AppProvider({ children, isAuthenticated }) {
   const [state, dispatch] = useReducer(reducer, null, loadInitialState)
-
   const [hydrated, setHydrated] = React.useState(false)
 
-  // Persist locally and sync the complete state to MongoDB through the API.
+  // Persist locally and sync to MongoDB whenever state changes (after hydration)
   useEffect(() => {
     if (!hydrated) return
     storage.persistState(state)
   }, [state, hydrated])
 
-  // Load cloud data once. If no cloud record exists, the user starts with empty data.
+  // Load cloud data whenever the user becomes authenticated
   useEffect(() => {
-    let active = true
-    const localHasData = hasStoredData()
+    if (!isAuthenticated) return
 
+    let active = true
+    setHydrated(false)
+
+    // Clear local state first, then load from cloud
     storage.loadRemoteState().then(remoteState => {
       if (!active) return
-      if (remoteState && !localHasData) {
+      if (remoteState) {
         dispatch({ type: 'HYDRATE_STATE', payload: remoteState })
+        // Also write to localStorage so it's available offline
+        storage.persistState(remoteState)
       }
       setHydrated(true)
     }).catch(() => {
@@ -183,7 +176,7 @@ export function AppProvider({ children }) {
     })
 
     return () => { active = false }
-  }, [])
+  }, [isAuthenticated])
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>

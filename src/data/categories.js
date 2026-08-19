@@ -2,12 +2,9 @@ export const FINANCE_CATEGORIES = [
   { id: 'food', label: 'Food & Dining', icon: '🍔', color: '#f59e0b' },
   { id: 'transport', label: 'Transport', icon: '🚗', color: '#3b82f6' },
   { id: 'shopping', label: 'Shopping', icon: '🛍️', color: '#ec4899' },
-  { id: 'education', label: 'Education', icon: '📚', color: '#6366f1' },
   { id: 'bills', label: 'Bills & Utilities', icon: '💡', color: '#8b5cf6' },
   { id: 'entertainment', label: 'Entertainment', icon: '🎮', color: '#f97316' },
-  { id: 'health', label: 'Health', icon: '🏥', color: '#ef4444' },
   { id: 'gym', label: 'Gym & Fitness', icon: '💪', color: '#22c55e' },
-  { id: 'subscriptions', label: 'Subscriptions', icon: '📱', color: '#14b8a6' },
   { id: 'other', label: 'Other', icon: '💰', color: '#94a3b8' },
 ]
 
@@ -16,7 +13,6 @@ export const INCOME_CATEGORIES = [
   { id: 'freelance', label: 'Freelance', icon: '💻' },
   { id: 'business', label: 'Business', icon: '🏢' },
   { id: 'investment', label: 'Investment', icon: '📈' },
-  { id: 'gift', label: 'Gift', icon: '🎁' },
   { id: 'other', label: 'Other', icon: '💵' },
 ]
 
@@ -39,7 +35,6 @@ export const HABIT_CATEGORIES = [
   { id: 'health', label: 'Health', icon: '❤️', color: '#ef4444' },
   { id: 'fitness', label: 'Fitness', icon: '💪', color: '#22c55e' },
   { id: 'study', label: 'Study', icon: '📖', color: '#6366f1' },
-  { id: 'spiritual', label: 'Spiritual', icon: '🕌', color: '#a78bfa' },
   { id: 'mindset', label: 'Mindset', icon: '🧠', color: '#3b82f6' },
   { id: 'social', label: 'Social', icon: '👥', color: '#f59e0b' },
   { id: 'finance', label: 'Finance', icon: '💰', color: '#14b8a6' },
@@ -76,19 +71,15 @@ export const GOAL_CATEGORIES = [
 
 export const WORKOUT_TYPES = [
   'Push Day', 'Pull Day', 'Leg Day', 'Full Body', 'Cardio',
-  'HIIT', 'Yoga', 'Stretching', 'Sports', 'Other'
+  'Stretching', 'Sports', 'Other'
 ]
 
 export const PAYMENT_METHODS = [
   { id: 'cash', label: 'Cash' },
   { id: 'upi', label: 'UPI' },
-  { id: 'card', label: 'Card' },
-  { id: 'netbanking', label: 'Net Banking' },
 ]
 
 export const STUDY_SUBJECTS = [
-  'Mathematics', 'Physics', 'Chemistry', 'Biology',
   'JavaScript', 'React', 'Node.js', 'MongoDB', 'Python',
-  'Data Structures', 'Algorithms', 'English', 'History',
-  'Geography', 'Economics', 'Computer Science', 'Other'
+  'Data Structures', 'Algorithms', 'English','Other'
 ]

@@ -5,8 +5,8 @@ export const DEFAULT_SETTINGS = {
   currency: '₹',
   theme: 'dark',
   weekStart: 'monday',
-  dailyWaterTarget: 3000,
-  dailyStudyTarget: 4,
+  dailyWaterTarget: 0,
+  dailyStudyTarget: 0,
   monthlyBudget: 0,
   waterReminderEnabled: false,
   scoreWeights: {

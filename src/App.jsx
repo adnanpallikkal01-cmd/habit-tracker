@@ -1,11 +1,13 @@
-import React, { Suspense, useState, useEffect } from 'react'
+import React, { Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 import { AppProvider } from './context/AppContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { useApp } from './context/AppContext.jsx'
 import Sidebar from './components/layout/Sidebar.jsx'
 import Header from './components/layout/Header.jsx'
 import MobileNav from './components/layout/MobileNav.jsx'
+import AuthPage from './pages/AuthPage.jsx'
 import {
   usePrayerReminders,
   useWaterReminder,
@@ -31,12 +33,11 @@ import Profile from './pages/Profile.jsx'
 
 // ── Notification permission banner ───────────────────────────────
 function NotifBanner() {
-  const [show, setShow] = useState(false)
+  const [show, setShow] = React.useState(false)
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!('Notification' in window)) return
     if (Notification.permission === 'default') {
-      // Show after 2s so page loads first
       const t = setTimeout(() => setShow(true), 2000)
       return () => clearTimeout(t)
     }
@@ -72,31 +73,35 @@ function NotifBanner() {
   )
 }
 
+// ── Loading Spinner ───────────────────────────────────────────────
+function FullPageSpinner() {
+  return (
+    <div className="flex h-screen items-center justify-center"
+      style={{ background: 'linear-gradient(180deg, #050505 0%, #08070A 100%)' }}>
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-10 h-10 border-2 border-[#5C2D91] border-t-[#EDBB00] rounded-full animate-spin" />
+        <p className="text-xs text-slate-600">Loading your data…</p>
+      </div>
+    </div>
+  )
+}
+
 // ── App Shell — needs to be inside AppProvider to read state ─────
 function AppShell() {
   const { state, dispatch } = useApp()
 
-  // Activate prayer reminders globally
   usePrayerReminders(
     state.settings?.prayerTimes,
     state.settings?.notifications?.prayer ?? true
   )
-
-  // Activate water reminder (every 15 min)
   useWaterReminder(state.settings?.waterReminderEnabled ?? false)
-
-  // Keep scheduled study reminders active while the app is open, even after navigation.
   useStudyReminderScheduler(state.studyScheduled || [], dispatch)
 
   return (
     <div className="app-shell flex h-screen overflow-hidden">
-      {/* Sidebar — hidden on mobile */}
       <Sidebar />
-
-      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header />
-
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-5xl mx-auto px-4 md:px-6 py-5">
             <Suspense fallback={
@@ -124,13 +129,23 @@ function AppShell() {
           </div>
         </main>
       </div>
-
-      {/* Mobile bottom nav */}
       <MobileNav />
-
-      {/* Prayer notification permission banner */}
       <NotifBanner />
     </div>
+  )
+}
+
+// ── Auth Gate — decides what to render ───────────────────────────
+function AuthGate() {
+  const { isAuthenticated, authLoading } = useAuth()
+
+  if (authLoading) return <FullPageSpinner />
+  if (!isAuthenticated) return <AuthPage />
+
+  return (
+    <AppProvider isAuthenticated={isAuthenticated}>
+      <AppShell />
+    </AppProvider>
   )
 }
 
@@ -138,9 +153,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <AppProvider>
-          <AppShell />
-        </AppProvider>
+        <AuthProvider>
+          <AuthGate />
+        </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
   )

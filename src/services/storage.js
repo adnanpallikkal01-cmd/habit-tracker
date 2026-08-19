@@ -1,7 +1,7 @@
 const NS = 'plt_v2_'
 const OLD_NS = 'plt_'
 const MIGRATION_KEY = `${NS}migrationDone`
-const USER_KEY = `${NS}userId`
+const TOKEN_KEY = 'adn_auth_token'
 
 // The previous build stored demo data under plt_. Clear that legacy namespace once
 // so the first database-backed build starts clean.
@@ -29,21 +29,24 @@ const keys = {
 }
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/$/, '')
-let userId = localStorage.getItem(USER_KEY)
-if (!userId) {
-  userId = globalThis.crypto?.randomUUID?.() || `user_${Date.now()}_${Math.random().toString(36).slice(2)}`
-  localStorage.setItem(USER_KEY, userId)
+
+const getToken = () => localStorage.getItem(TOKEN_KEY)
+
+const authHeaders = () => {
+  const token = getToken()
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
 }
 
 let syncTimer = null
-let currentState = null
 
 const safeParse = (raw) => {
   try { return raw ? JSON.parse(raw) : null } catch { return null }
 }
 
 export const storage = {
-  getUserId: () => userId,
   get: (key) => safeParse(localStorage.getItem(keys[key] || key)),
   set: (key, value) => {
     try { localStorage.setItem(keys[key] || key, JSON.stringify(value)) } catch (e) { console.error('Storage write error:', e) }
@@ -53,7 +56,7 @@ export const storage = {
     Object.values(keys).forEach(k => localStorage.removeItem(k))
   },
   exportAll: () => {
-    const data = { userId }
+    const data = {}
     Object.entries(keys).forEach(([k, v]) => {
       const raw = localStorage.getItem(v)
       if (raw) data[k] = safeParse(raw)
@@ -61,7 +64,6 @@ export const storage = {
     return data
   },
   persistState: (state) => {
-    currentState = state
     Object.entries(state).forEach(([key, value]) => {
       if (keys[key]) storage.set(key, value)
     })
@@ -69,13 +71,12 @@ export const storage = {
     syncTimer = setTimeout(() => storage.syncState(state), 500)
   },
   syncState: async (state) => {
+    const token = getToken()
+    if (!token) return // not logged in, skip sync
     try {
       await fetch(`${API_BASE_URL}/state`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': userId,
-        },
+        headers: authHeaders(),
         body: JSON.stringify({ state }),
       })
     } catch (error) {
@@ -83,9 +84,11 @@ export const storage = {
     }
   },
   loadRemoteState: async () => {
+    const token = getToken()
+    if (!token) return null
     try {
       const response = await fetch(`${API_BASE_URL}/state`, {
-        headers: { 'x-user-id': userId },
+        headers: authHeaders(),
       })
       if (!response.ok) return null
       const data = await response.json()
@@ -96,10 +99,12 @@ export const storage = {
     }
   },
   deleteRemoteState: async () => {
+    const token = getToken()
+    if (!token) return
     try {
       await fetch(`${API_BASE_URL}/state`, {
         method: 'DELETE',
-        headers: { 'x-user-id': userId },
+        headers: authHeaders(),
       })
     } catch (error) {
       console.warn('Could not delete cloud data.', error)
