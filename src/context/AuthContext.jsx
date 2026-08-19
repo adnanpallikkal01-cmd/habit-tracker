@@ -3,10 +3,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 const AuthContext = createContext(null)
 
 const TOKEN_KEY = 'adn_auth_token'
-const DEFAULT_API_URL = typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)
-  ? 'https://habit-tracker-lwfi.onrender.com/api'
-  : 'http://localhost:4000/api'
-const API_BASE_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, '')
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/$/, '')
 const VERIFY_TIMEOUT_MS = 5000
 
 function withTimeout(signalMs = VERIFY_TIMEOUT_MS) {

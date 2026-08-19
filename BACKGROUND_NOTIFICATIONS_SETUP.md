@@ -20,7 +20,7 @@ npm run generate-vapid
 
 The command prints three values.
 
-Add these to your **Render** service environment variables. The code cannot create or inject Render environment variables automatically, so this step is required for production:
+Add these to your **Render** service environment variables:
 
 ```text
 VAPID_PUBLIC_KEY=...
@@ -78,14 +78,3 @@ Web Push notifications require a supported iOS/iPadOS version and the site must 
 ### Important Render free-tier note
 
 The reminder scheduler runs on the Render web service. If the free Render instance is sleeping, a reminder can be delayed until the service wakes. For dependable exact-time reminders, keep the backend awake or run the reminder scheduler as an always-on/cron-capable service.
-
-
-## 7. If Profile says “Cannot reach notification server”
-
-Open **Profile → Reminders** and look at the API line shown under the notification status when the server is unavailable. It should point to:
-
-`https://habit-tracker-lwfi.onrender.com/api/health`
-
-If the URL is wrong, set the Netlify environment variable `VITE_API_URL` to your Render API URL and redeploy the frontend. The frontend also has a production fallback to the current Render API URL when `VITE_API_URL` is missing.
-
-If the API responds but push is not configured, Render is missing one or both VAPID variables. Add them, redeploy the Render service, then use **Enable / Refresh** again.

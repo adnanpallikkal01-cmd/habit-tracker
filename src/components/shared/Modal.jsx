@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react'
  * Modal — animated overlay modal
  * Props: isOpen, onClose, title, children, size ('sm'|'md'|'lg'|'xl')
  */
-export default function Modal({ isOpen, onClose, title, children, size = 'md', variant = 'default' }) {
+export default function Modal({ isOpen, onClose, title, children, size = 'md' }) {
   const overlayRef = useRef()
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', v
     >
       <div className="absolute inset-0 bg-black/45 backdrop-blur-sm animate-fadeIn" />
 
-      <div className={`relative mx-auto w-full ${sizeClass} max-h-[85vh] flex max-w-[min(92vw,28rem)] flex-col overflow-hidden rounded-[22px] border ${variant === 'glass' ? 'border-white/15 bg-[#111014]/72 backdrop-blur-2xl shadow-[0_30px_80px_rgba(0,0,0,0.62)]' : 'border-white/10 bg-[#111014]/95 shadow-[0_30px_80px_rgba(0,0,0,0.58)]'} animate-slideUp`}>
+      <div className={`relative mx-auto w-full ${sizeClass} max-h-[85vh] flex max-w-[min(92vw,28rem)] flex-col overflow-hidden rounded-[22px] border border-white/10 bg-[#111014]/95 shadow-[0_30px_80px_rgba(0,0,0,0.58)] animate-slideUp`}>
         {title && (
           <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 sm:px-6 sm:py-4">
             <h2 className="text-base font-semibold text-white">{title}</h2>
