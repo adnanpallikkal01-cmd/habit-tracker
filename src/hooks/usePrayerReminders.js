@@ -79,14 +79,36 @@ export function usePrayerReminders(prayerTimes, enabled) {
   }, [prayerTimes, enabled])
 }
 
-export function useWaterReminder(enabled) {
+function isWithinWaterQuietHours(settings) {
+  if (!settings?.waterReminderNightPauseEnabled) return false
+  const start = String(settings.waterReminderNightStart || '22:00')
+  const end = String(settings.waterReminderNightEnd || '06:00')
+  const [sh, sm] = start.split(':').map(Number)
+  const [eh, em] = end.split(':').map(Number)
+  if (![sh, sm, eh, em].every(Number.isFinite)) return false
+  const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes()
+  const startMinutes = sh * 60 + sm
+  const endMinutes = eh * 60 + em
+  if (startMinutes === endMinutes) return false
+  return startMinutes > endMinutes
+    ? nowMinutes >= startMinutes || nowMinutes < endMinutes
+    : nowMinutes >= startMinutes && nowMinutes < endMinutes
+}
+
+export function useWaterReminder(settings) {
   useEffect(() => {
+    const enabled = settings?.waterReminderEnabled ?? false
     if (!enabled || !('Notification' in window)) return
-    const fire = () => fireNotification('💧 Time to Drink Water!', 'Stay hydrated — have a glass of water now! 🥤', 'water-reminder')
+    const intervalMinutes = Math.max(5, Number(settings?.waterReminderIntervalMinutes || 15))
+    const fire = () => {
+      if (isWithinWaterQuietHours(settings)) return
+      fireNotification('💧 Time to Drink Water!', 'Stay hydrated — have a glass of water now! 🥤', 'water-reminder')
+    }
+    // Do not wake the user during configured night hours.
     fire()
-    const interval = setInterval(fire, 15 * 60 * 1000)
+    const interval = setInterval(fire, intervalMinutes * 60 * 1000)
     return () => clearInterval(interval)
-  }, [enabled])
+  }, [settings?.waterReminderEnabled, settings?.waterReminderIntervalMinutes, settings?.waterReminderNightPauseEnabled, settings?.waterReminderNightStart, settings?.waterReminderNightEnd])
 }
 
 export function useStudyReminderScheduler(scheduleItems, dispatch) {

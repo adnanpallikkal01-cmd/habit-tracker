@@ -202,6 +202,19 @@ function formatTime12(timeStr) {
   return `${hour}:${String(m).padStart(2, '0')} ${period}`
 }
 
+function isWithinQuietHours(localHour, localMinute, startStr = '22:00', endStr = '06:00') {
+  const [sh, sm] = String(startStr).split(':').map(Number)
+  const [eh, em] = String(endStr).split(':').map(Number)
+  if (![sh, sm, eh, em].every(Number.isFinite)) return false
+  const nowMinutes = Number(localHour) * 60 + Number(localMinute)
+  const startMinutes = sh * 60 + sm
+  const endMinutes = eh * 60 + em
+  if (startMinutes === endMinutes) return false
+  return startMinutes > endMinutes
+    ? nowMinutes >= startMinutes || nowMinutes < endMinutes
+    : nowMinutes >= startMinutes && nowMinutes < endMinutes
+}
+
 function dueWithinWindow(date, timeZone, dateStr, timeStr, windowMinutes = 5) {
   if (!dateStr || !timeStr) return false
   const local = getLocalParts(date, timeZone)
@@ -318,11 +331,19 @@ async function runReminderScheduler() {
         )
       }
 
-      // Water reminders. Interval is configurable from Profile (15/30/45/60/90/120).
+      // Water reminders. Interval is configurable from Profile. Night pause prevents
+      // hydration notifications from waking the user (default: 10:00 PM–6:00 AM).
       if (settings.waterReminderEnabled || settings.notifications?.water === true) {
         const interval = Math.max(5, Number(settings.waterReminderIntervalMinutes || 15))
         const minuteOfDay = Number(local.hour) * 60 + Number(local.minute)
-        if (minuteOfDay % interval === 0) {
+        const nightPause = settings.waterReminderNightPauseEnabled ?? true
+        const inNightPause = nightPause && isWithinQuietHours(
+          local.hour,
+          local.minute,
+          settings.waterReminderNightStart || '22:00',
+          settings.waterReminderNightEnd || '06:00'
+        )
+        if (!inNightPause && minuteOfDay % interval === 0) {
           await sendReminder(record.userId, `water:${today}:${Math.floor(minuteOfDay / interval)}`, {
             title: '💧 Time to Drink Water!',
             body: 'Stay hydrated — have a glass of water now! 🥤',

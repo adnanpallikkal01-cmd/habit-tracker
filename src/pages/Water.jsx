@@ -22,6 +22,10 @@ export default function Water() {
   const currentMl = getWaterMl(state.waterLogs, today)
   const percentage = Math.min(100, Math.round((currentMl / target) * 100))
   const reminderEnabled = state.settings?.waterReminderEnabled ?? false
+  const reminderInterval = Math.max(5, Number(state.settings?.waterReminderIntervalMinutes || 15))
+  const nightPause = state.settings?.waterReminderNightPauseEnabled ?? true
+  const nightStart = state.settings?.waterReminderNightStart || '22:00'
+  const nightEnd = state.settings?.waterReminderNightEnd || '06:00'
 
   const streak = useMemo(() => getWaterStreak(state.waterLogs, target), [state.waterLogs, target])
 
@@ -96,18 +100,18 @@ export default function Water() {
         </button>
       </div>
 
-      {/* 15-min Reminder toggle */}
+      {/* Water Reminder toggle */}
       <div className="rounded-2xl p-4 bg-slate-800/60 border border-slate-700/40">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-white flex items-center gap-2">
               <Droplets size={15} className="text-cyan-400" />
-              15-Minute Water Reminder
+              Water Reminder
             </p>
             <p className="text-xs text-slate-400 mt-0.5">
               {reminderEnabled
-                ? '🔔 You\'ll get a notification every 15 minutes'
-                : 'Get notified every 15 minutes to drink water'}
+                ? `🔔 You\'ll get a notification every ${reminderInterval} minutes`
+                : `Get notified every ${reminderInterval} minutes to drink water`}
             </p>
           </div>
           <button
@@ -127,7 +131,7 @@ export default function Water() {
         </div>
         {reminderEnabled && (
           <p className="text-xs text-cyan-600 mt-2">
-            💡 Keep this tab open for reminders to work. Notifications fire even if you switch pages.
+            💡 Reminders continue in the background when enabled. {nightPause ? `Night pause: ${nightStart}–${nightEnd}.` : 'Night pause is off.'}
           </p>
         )}
       </div>

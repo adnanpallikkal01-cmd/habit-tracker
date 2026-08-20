@@ -1178,7 +1178,7 @@ export default function Study() {
                     {fmtMins(session.durationMins)}
                   </span>
                   <button onClick={() => handleDeleteSession(session.id)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center opacity-100 md:opacity-0 hover:opacity-100 transition-all"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-all"
                     style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}
                     onMouseEnter={e => e.currentTarget.style.opacity = 1}
                     onMouseLeave={e => e.currentTarget.style.opacity = 0}>

@@ -11,6 +11,9 @@ export const DEFAULT_SETTINGS = {
   monthlyBudget: 0,
   waterReminderEnabled: false,
   waterReminderIntervalMinutes: 15,
+  waterReminderNightPauseEnabled: true,
+  waterReminderNightStart: '22:00',
+  waterReminderNightEnd: '06:00',
   scoreWeights: {
     prayer: 20,
     study: 20,

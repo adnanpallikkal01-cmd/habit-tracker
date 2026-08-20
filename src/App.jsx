@@ -92,7 +92,7 @@ function AppShell() {
     state.settings?.prayerTimes,
     state.settings?.notifications?.prayer ?? true
   )
-  useWaterReminder(state.settings?.waterReminderEnabled ?? false)
+  useWaterReminder(state.settings)
   useStudyReminderScheduler(state.studyScheduled || [], dispatch)
 
   React.useEffect(() => {

@@ -44,6 +44,16 @@ function NumberInput({ value, onChange, min = 0, max, step = 1 }) {
   )
 }
 
+function formatTime12(timeStr) {
+  if (!timeStr) return ''
+  const [hRaw, mRaw] = String(timeStr).split(':')
+  const h = Number(hRaw), m = Number(mRaw)
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return String(timeStr)
+  const period = h >= 12 ? 'PM' : 'AM'
+  const hour = h % 12 || 12
+  return `${hour}:${String(m).padStart(2, '0')} ${period}`
+}
+
 function Toggle({ checked, onChange }) {
   return (
     <button
@@ -402,6 +412,36 @@ export default function Profile() {
             {[15,30,45,60,90,120].map(m => <option key={m} value={m}>{m} minutes</option>)}
           </select>
         </Row>
+        <Row label="Stop water reminders at night" subtitle="Pause hydration notifications while you sleep">
+          <Toggle
+            checked={settings.waterReminderNightPauseEnabled ?? true}
+            onChange={v => update('waterReminderNightPauseEnabled', v)}
+          />
+        </Row>
+        {(settings.waterReminderNightPauseEnabled ?? true) && (
+          <div className="rounded-xl border border-slate-700/50 bg-slate-900/50 p-3 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium text-white">Night pause starts</p>
+                <p className="text-[11px] text-slate-500">No water alerts after this time</p>
+              </div>
+              <div className="text-right">
+                <input type="time" value={settings.waterReminderNightStart || '22:00'} onChange={e => update('waterReminderNightStart', e.target.value)} className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white" />
+                <p className="text-[11px] text-slate-500 mt-1">{formatTime12(settings.waterReminderNightStart || '22:00')}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium text-white">Night pause ends</p>
+                <p className="text-[11px] text-slate-500">Water alerts resume after this time</p>
+              </div>
+              <div className="text-right">
+                <input type="time" value={settings.waterReminderNightEnd || '06:00'} onChange={e => update('waterReminderNightEnd', e.target.value)} className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white" />
+                <p className="text-[11px] text-slate-500 mt-1">{formatTime12(settings.waterReminderNightEnd || '06:00')}</p>
+              </div>
+            </div>
+          </div>
+        )}
         <Row label="Study Target (hours)" subtitle={`Currently: ${settings.dailyStudyTarget}h per day`}>
           <NumberInput
             value={settings.dailyStudyTarget}
